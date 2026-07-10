@@ -2,8 +2,8 @@ import { Router } from "express";
 import { auth } from "../../middelwares/auth";
 import { Role } from "../../../generated/prisma/enums";
 import { validate } from "../../middelwares/validate";
-import { createPropertiesSchema } from "./landLord.validation";
-import { landLordController } from "./landLord.controller";
+import { createPropertiesSchema, propertyIdSchema, updatePropertySchema } from "./landLord.validation";
+import { landLordController, landLordController } from "./landLord.controller";
 
 const router = Router();
 
@@ -12,15 +12,16 @@ const router = Router();
 router.post("/properties", auth(Role.LANDLORD), validate(createPropertiesSchema), landLordController.createProperty);
 
 
+router.put("/properties/:id", auth(Role.LANDLORD),
+  validate(propertyIdSchema, "params"),
+  validate(updatePropertySchema),
+  landLordController.updateProperty
+);
 
-
-
-
-// router.put(
-//   "/properties/:id",
-//   validate(propertyIdSchema, "params"),
-//   validate(updatePropertySchema),
-//   updateLandlordProperty
+// router.get(
+//   "/requests",
+//   validate(rentalQuerySchema, "query"),
+//   getLandlordRequests
 // );
 
 // router.delete(
@@ -29,18 +30,13 @@ router.post("/properties", auth(Role.LANDLORD), validate(createPropertiesSchema)
 //   deleteLandlordProperty
 // );
 
-// router.get(
-//   "/requests",
-//   validate(rentalQuerySchema, "query"),
-//   getLandlordRequests
-// );
 
-// router.patch(
-//   "/requests/:id",
+// router.patch("/requests/:id",
 //   validate(rentalIdSchema, "params"),
 //   validate(updateRentalStatusSchema),
 //   updateLandlordRequestStatus
-// );
+// );  //Approve or reject a rental request
+
 
 
 

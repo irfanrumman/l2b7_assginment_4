@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
-import { CreatePropertiesvalidated } from "./landLord.validation";
+import { CreatePropertiesvalidated, UpdatePropertyValidated } from "./landLord.validation";
 
 
 
@@ -65,8 +65,55 @@ const createPropertyIntoDB = async (
 };
 
 
+const updatePropertyInDB = async (
+  propertyId: string, landlordId: string,
+  payload: UpdatePropertyValidated,
+) => {
+  const property = await prisma.property.findUnique({
+    where: {
+      id: propertyId,
+    },
+  });
 
+  if (!property) {
+    throw new AppError("Property not found", httpStatus.NOT_FOUND);
+  }
+
+    if (property.landlordId !== landlordId) {
+    throw new AppError('You are not authorized to update this property', httpStatus.FORBIDDEN);
+  }
+
+  const updatedProperty = await prisma.property.update({
+    where: {
+      id: propertyId,
+    },
+    data: {
+      ...payload,
+    },
+    include: {
+      landlord: {
+        select: {   
+         id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+        },
+      },
+    },
+  });
+
+  return updatedProperty;
+};
 
 export const landLordService = {
   createPropertyIntoDB,
+  updatePropertyInDB,
 };
