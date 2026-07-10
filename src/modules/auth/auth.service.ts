@@ -114,7 +114,7 @@ const refreshToken = async (refreshToken: string)=>{
     }
   })
  if(user.status === "BANNED") {
-   throw new AppError("User Is Blocked", httpStatus.FORBIDDEN);
+   throw new AppError("User Is Banned.", httpStatus.FORBIDDEN);
  }
 
  const jwtPayload = {

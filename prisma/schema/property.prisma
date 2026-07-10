@@ -2,18 +2,24 @@
 
 model Property {
   id                  String               @id @default(uuid())
+
   landlordId          String
   categoryId          String
+
   title               String
   description         String
   location            String
   price               Float
-  availabilityStatus  PropertyAvailability @default(AVAILABLE)
+  isAvailable         Boolean              @default(true)
+
+
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 
-  landlord       User            @relation(fields: [landlordId], references: [id])
-  category       Category        @relation(fields: [categoryId], references: [id])
+  landlord       User            @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  
+  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
   rentalRequests RentalRequest[]
   reviews        Review[]
 

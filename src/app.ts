@@ -4,6 +4,8 @@ import cors from "cors";
 import config from "./config";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { globalErrorHandler } from "./middelwares/globalError";
+import { landlordRoutes } from "./modules/landLord/landLord.routes";
+import { categoryRoutes } from "./modules/category/category.routes";
 
 
 
@@ -26,12 +28,21 @@ app.get("/", async (req: Request, res: Response) => {
 
 
 
-//auth api
+// api 
 app.use("/api/auth", authRoutes);
+app.use ("/api/landlord", landlordRoutes);
+app.use("/api/categories", categoryRoutes);
+
+// app.use("/api/landlord", landlordRoutes);
+// app.use("/api/rentals", rentalRoutes);
+// app.use("/api/payments", paymentRoutes);
+// app.use("/api/reviews", reviewRoutes);
+// app.use("/api/admin", adminRoutes);
 
 
 
 
+// protected route
 
 // Global Error Handler
 app.use(globalErrorHandler)

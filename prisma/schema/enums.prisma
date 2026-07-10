@@ -12,12 +12,6 @@ enum UserStatus {
 }
 
 
-//for property
-
-enum PropertyAvailability {
-  AVAILABLE
-  RENTED
-}
 
 //for rental request
 
