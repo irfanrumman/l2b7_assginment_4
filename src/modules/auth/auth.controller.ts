@@ -4,7 +4,8 @@ import { authService } from "./auth.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpstatus from "http-status";
 import { AppError } from "../../utils/AppError";
-import { UpdateUserProfile, UpdateUserProfile, updateUserProfileSchema } from "./auth.validation";
+import { UpdateUserProfile } from "./auth.validation";
+
 
 
 
@@ -57,6 +58,34 @@ const registerUser = catchAsync(async (req: Request, res: Response, next: NextFu
   },
 );
 
+const refreshToken = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    const { accessToken } = await authService.refreshToken(refreshToken);
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: false, // Set to true in production
+      sameSite: "none",
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours or 1 day
+    });
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpstatus.OK,
+      message: "Token Refreshed Successfully.",
+      data: {
+        accessToken,
+      },
+    });
+  },
+);
+
+
+
+
+
 
 const getMyProfile = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -97,9 +126,11 @@ const updatedUser = await authService.updateMyProfileInDB(userId!, req.body as U
 
 
 
+
   export const authController = {
     registerUser,
     loginUser,
     getMyProfile,
     updateMyProfile,
+    refreshToken,
   };

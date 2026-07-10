@@ -11,7 +11,7 @@ const router = Router();
 router.post('/register', validate(registerUserSchema), authController.registerUser);  
 router.post('/login', validate(loginUserSchema), authController.loginUser);                 
 
-// router.post("/refresh-token", authController.refreshToken) 
+router.post("/refresh-token", authController.refreshToken) 
 
 
 router.get('/me', auth(Role.ADMIN, Role.LANDLORD, Role.TENANT),  authController.getMyProfile); 
