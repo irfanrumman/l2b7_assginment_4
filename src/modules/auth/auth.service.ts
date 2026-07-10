@@ -1,17 +1,20 @@
 import { SignOptions } from "jsonwebtoken";
 import config from "../../config";
 import { jwtUtils } from "../../utils/jwt";
-import { prisma } from "../../lib/prisma";
+import {prisma} from "../../lib/prisma";
 import bcrypt from "bcryptjs";
-import { ILoginUser, RegisterUserPayload } from "./auth.interface";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
+import {LoginUser, RegisterUser, UpdateUserProfile } from "./auth.validation";
+import { Role } from "../../../generated/prisma/enums";
+import { Prisma } from "../../../generated/prisma/client";
 
 
 
 
 
-const registerUserIntoDB = async (payload: RegisterUserPayload) => {
+
+const registerUserIntoDB = async (payload: RegisterUser) => {
   
   const { name, email, password, role, phone } = payload;
 
@@ -49,7 +52,7 @@ const registerUserIntoDB = async (payload: RegisterUserPayload) => {
 
 
 
-const loginUserIntoDB = async (payload: ILoginUser) => {
+const loginUserIntoDB = async (payload: LoginUser) => {
   const { email, password } = payload;
 
   const user = await prisma.user.findUniqueOrThrow({
@@ -96,7 +99,67 @@ const loginUserIntoDB = async (payload: ILoginUser) => {
 
 
 
+const getMyProfileFromDB = async (userId: string, role: Role) => {
+
+  const includeOptions: Prisma.UserInclude =
+    role === Role.LANDLORD
+      ? { properties: true }
+      : role === Role.TENANT
+      ? { rentalRequests: true, reviews: true }
+      : role === Role.ADMIN
+      ? {}
+      : {}; 
+       
+  
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    omit: {
+      password: true,
+    },
+    include: includeOptions
+  });
+
+  
+    if (!user) {
+    throw new AppError("User not found.", httpStatus.UNAUTHORIZED);
+  }
+
+  if(user.status === "BANNED") {
+    throw new AppError("Your account has been banned. Please contact support.", httpStatus.FORBIDDEN);
+  }
+
+  return user;
+};
+
+
+
+
+const updateMyProfileInDB = async (userId: string, payload: UpdateUserProfile) => {
+  
+  const updatedData = payload;
+
+  
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      ...updatedData,
+    },
+    omit: {
+      password: true,
+    },
+  });
+
+  return updatedUser;
+};
+
 export const authService = {
   registerUserIntoDB,
   loginUserIntoDB,
+  getMyProfileFromDB,
+  updateMyProfileInDB,
 }

@@ -3,6 +3,8 @@ import { catchAsync } from "../../utils/catchAsync";
 import { authService } from "./auth.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpstatus from "http-status";
+import { AppError } from "../../utils/AppError";
+import { UpdateUserProfile, UpdateUserProfile, updateUserProfileSchema } from "./auth.validation";
 
 
 
@@ -56,8 +58,48 @@ const registerUser = catchAsync(async (req: Request, res: Response, next: NextFu
 );
 
 
+const getMyProfile = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+
+  if (!req.user) {
+    throw new AppError('You are not logged in! Please log in to get access.', httpstatus.UNAUTHORIZED);
+  }
+    
+    const {id, role} = req.user;
+
+    const user = await authService.getMyProfileFromDB(id, role);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpstatus.OK,
+      message: "User Profile Retrieved Successfully",
+      data: { user },
+    });
+});
+
+const updateMyProfile = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    throw new AppError('You are not logged in! Please log in to get access.', httpstatus.UNAUTHORIZED);
+  }
+  
+const updatedUser = await authService.updateMyProfileInDB(userId!, req.body as UpdateUserProfile);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpstatus.OK,
+    message: "User Profile Updated Successfully",
+    data: { user: updatedUser },
+  });
+
+  
+});
+
+
 
   export const authController = {
     registerUser,
     loginUser,
+    getMyProfile,
+    updateMyProfile,
   };
