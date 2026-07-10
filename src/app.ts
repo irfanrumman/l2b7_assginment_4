@@ -6,6 +6,7 @@ import { authRoutes } from "./modules/auth/auth.routes";
 import { globalErrorHandler } from "./middelwares/globalError";
 import { landlordRoutes } from "./modules/landLord/landLord.routes";
 import { categoryRoutes } from "./modules/category/category.routes";
+import { propertyRoutes } from "./modules/property/property.routes";
 
 
 
@@ -32,6 +33,7 @@ app.get("/", async (req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use ("/api/landlord", landlordRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/properties", propertyRoutes);
 
 // app.use("/api/landlord", landlordRoutes);
 // app.use("/api/rentals", rentalRoutes);

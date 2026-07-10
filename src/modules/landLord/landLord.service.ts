@@ -3,6 +3,9 @@ import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
 import { CreatePropertiesvalidated } from "./landLord.validation";
 
+
+
+
 const createPropertyIntoDB = async (
   landlordId: string,
   payload: CreatePropertiesvalidated,
@@ -60,6 +63,9 @@ const createPropertyIntoDB = async (
 
   return createdProperty;
 };
+
+
+
 
 export const landLordService = {
   createPropertyIntoDB,

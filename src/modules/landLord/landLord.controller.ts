@@ -5,6 +5,8 @@ import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 import { CreatePropertiesvalidated } from "./landLord.validation";
 
+
+
 const createProperty = catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
 
@@ -20,6 +22,7 @@ const createProperty = catchAsync(
     data: result,
   });
 });
+
 
 
 

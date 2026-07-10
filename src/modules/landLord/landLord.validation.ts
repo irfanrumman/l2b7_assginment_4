@@ -13,4 +13,6 @@ export const createPropertiesSchema = z.object({
 
 
 
+
+
 export type CreatePropertiesvalidated = z.infer<typeof createPropertiesSchema>;
