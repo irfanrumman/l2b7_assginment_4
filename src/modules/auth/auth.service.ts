@@ -6,8 +6,6 @@ import bcrypt from "bcryptjs";
 import { ILoginUser, RegisterUserPayload } from "./auth.interface";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
-import { Prisma } from "../../../generated/prisma/client";
-import { Role } from "../../../generated/prisma/enums";
 
 
 
@@ -98,49 +96,7 @@ const loginUserIntoDB = async (payload: ILoginUser) => {
 
 
 
-const getMyProfileFromDB = async (userId: string, role: Role) => {
-
-  const includeOptions: Prisma.UserInclude =
-    role === Role.LANDLORD
-      ? { properties: true }
-      : role === Role.TENANT
-      ? { rentalRequests: true, reviews: true }
-      : role === Role.ADMIN
-      ? {}
-      : {}; 
-       
-  
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-    omit: {
-      password: true,
-    },
-    include: includeOptions
-  });
-
-  
-    if (!user) {
-    throw new AppError("User not found.", httpStatus.UNAUTHORIZED);
-  }
-
-  if(user.status === "BANNED") {
-    throw new AppError("Your account has been banned. Please contact support.", httpStatus.FORBIDDEN);
-  }
-
-  return user;
-};
-
-
-
-
-
-
-
-
 export const authService = {
   registerUserIntoDB,
   loginUserIntoDB,
-  getMyProfileFromDB
 }
