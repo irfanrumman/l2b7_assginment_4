@@ -21,10 +21,6 @@ export const validate =
     const targetData = req[target];
     const result = schema.safeParse(targetData);
 
-    // if (!result.success) {
-
-    //   return next(new AppError(`Validation failed: ${result.error.message}`, httpStatus.BAD_REQUEST));
-    // }
 
 if (!result.success) {
   const errorMessages = result.error.issues
