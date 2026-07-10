@@ -3,6 +3,12 @@ import { catchAsync } from "../../utils/catchAsync";
 import { authService } from "./auth.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpstatus from "http-status";
+import { Role } from "../../../generated/prisma/enums";
+import { AppError } from "../../utils/AppError";
+
+
+
+
 
 const registerUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
@@ -52,7 +58,23 @@ const registerUser = catchAsync(async (req: Request, res: Response, next: NextFu
 );
 
 
-const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {});
+const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+
+  if (!req.user) {
+    throw new AppError('You are not logged in! Please log in to get access.', httpstatus.UNAUTHORIZED);
+  }
+    
+    const {id, role} = req.user;
+    
+    const user = await authService.getMyProfileFromDB(id, role);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpstatus.OK,
+      message: "User Profile Retrieved Successfully",
+      data: { user },
+    });
+});
 
   export const authController = {
     registerUser,

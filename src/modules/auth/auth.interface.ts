@@ -7,3 +7,9 @@ export interface RegisterUserPayload {
   role: Role;
   phone?: string;
 }
+
+
+export interface ILoginUser {
+  email: string;
+  password: string;
+};

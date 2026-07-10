@@ -5,6 +5,8 @@ import { jwtUtils } from "../utils/jwt";
 import { JwtPayload } from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
 import { Role } from "../../generated/prisma/enums";
+import { AppError } from "../utils/AppError";
+import httpStatus from "http-status";
 
 
 declare global {
@@ -34,13 +36,13 @@ declare global {
         
 
     if (!token) {
-      throw new Error("you are not logged in! Please log in to get access.");
+      throw new AppError("You are not logged in! Please log in to get access.", httpStatus.UNAUTHORIZED);
     }
   
     const verifiedToken = jwtUtils.verifyToken(token, config.jwt_access_secret);
 
     if(!verifiedToken.success) {
-     throw new Error(verifiedToken.error);
+     throw new AppError(verifiedToken.error, httpStatus.UNAUTHORIZED);
    }
 
 
@@ -48,7 +50,7 @@ declare global {
 
 
     if (requiredRoles.length && !requiredRoles.includes(role)) {
-        throw new Error("You do not have permission to perform this resource");
+        throw new AppError("You do not have permission to access this resource", httpStatus.FORBIDDEN);
     }
 
    const user = await prisma.user.findUnique({
@@ -62,12 +64,12 @@ declare global {
     });
    
     if (!user) {
-      throw new Error("User not found, please log in again");
+      throw new AppError("User not found, please log in again", httpStatus.UNAUTHORIZED);
     }
 
-    // if(user.activestatus === "BLOCKED") {
-    //   throw new Error("Your account has been blocked. Please contact support.");
-    // }
+    if(user.status === "BANNED") {
+      throw new AppError("Your account has been banned. Please contact support.", httpStatus.FORBIDDEN);
+    }
 
     req.user = {
       id,
