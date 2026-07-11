@@ -12,6 +12,7 @@ import { adminRoutes } from "./modules/admin/admin.routes";
 import { reviewRoutes } from "./modules/review/review.routes";
 import { paymentRoutes } from "./modules/payment/payment.routes";
 import { PaymentController } from "./modules/payment/payment.controller";
+import { notFound } from "./middelwares/notFound";
 
 
 
@@ -57,12 +58,9 @@ app.use("/api/payments", paymentRoutes);
 
 
 
+//not found route handler
+app.use(notFound);
 
-
-
-
-
-// protected route
 
 // Global Error Handler
 app.use(globalErrorHandler)
