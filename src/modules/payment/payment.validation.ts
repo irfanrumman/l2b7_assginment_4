@@ -1,40 +1,5 @@
 import { z } from "zod";
 
-// export const createPaymentSchema = z.object({
-//   body: z.object({
-//     rentalRequestId: z.string({
-//       required_error: "Rental Request ID is required",
-//     }).min(1, "Rental Request ID cannot be empty"),
-    
-//     provider: z.enum(["STRIPE", "SSLCOMMERZ"], {
-//       required_error: "Payment provider is required",
-//     }),
-//   }),
-// });
-
-
-// export const createPaymentSchema = z.object({
-//   body: z.object({
-//     rentalRequestId: z.string().uuid({
-//       message: "Invalid Rental Request ID",
-//     }),
-
-//     provider: z.enum(["STRIPE", "SSLCOMMERZ"]),
-//   }),
-// });
-
-
-// export const createPaymentSchema = z.object({
-//   rentalRequestId: z.string().uuid({
-//     message: "Invalid Rental Request ID",
-//   }),
-
-//   provider: z.enum(["STRIPE", "SSLCOMMERZ"]),
-// });
-
-
-
-
 
 export const createPaymentSchema = z.object({
   rentalRequestId: z.string().uuid({
@@ -49,4 +14,15 @@ export const createPaymentSchema = z.object({
 
 
 
+
+export const verifyPaymentSchema = z.object({
+  sessionId: z.string().min(1, {
+    message: "Session ID is required",
+  }),
+});
+
+
+
+
 export type CreatePaymentValidated = z.infer<typeof createPaymentSchema>;
+export type VerifyPaymentValidated = z.infer<typeof verifyPaymentSchema>;

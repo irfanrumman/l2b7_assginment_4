@@ -10,7 +10,7 @@ import { paymentService } from "./payment.service";
 
 
 const createPaymentSession = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    
+
   const tenantId = req.user?.id as string;
   const payload = req.body;
 
@@ -29,7 +29,25 @@ const createPaymentSession = catchAsync(async (req: Request, res: Response, next
 
 
 
+const verifyPayment = catchAsync(async (req: Request, res: Response) => {
+  const tenantId = req.user?.id as string;
+  const { sessionId } = req.body;
+
+  const result = await paymentService.verifyPaymentFromDB(tenantId, sessionId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Payment status verified successfully",
+    data: result,
+  });
+});
+
+
+
+
 
 export const PaymentController = {
   createPaymentSession,
+  verifyPayment,
 };
