@@ -11,6 +11,7 @@ import { rentalRoutes } from "./modules/rental/rental.routes";
 import { adminRoutes } from "./modules/admin/admin.routes";
 import { reviewRoutes } from "./modules/review/review.routes";
 import { paymentRoutes } from "./modules/payment/payment.routes";
+import { PaymentController } from "./modules/payment/payment.controller";
 
 
 
@@ -22,6 +23,17 @@ app.use(
     credentials: true,
   }),
 );
+
+
+
+app.post("/api/payments/webhook",
+    express.raw({ type: "application/json" }),
+   PaymentController.stripeWebhook
+);
+
+
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

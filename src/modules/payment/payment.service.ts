@@ -3,9 +3,12 @@
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
-import { PaymentProvider } from "../../../generated/prisma/enums";
+import { PaymentProvider, Role } from "../../../generated/prisma/enums";
 import { stripe } from "../../utils/stripe";
 import config from "../../config";
+import Stripe from "stripe";
+import { PaymentQueryValidated } from "./payment.validation";
+import { Prisma } from "../../../generated/prisma/client";
 
 
 const createPaymentSessionIntoDB = async (
@@ -107,7 +110,11 @@ const verifyPaymentFromDB = async (tenantId: string, sessionId: string) => {
     }, include: {
         rentalRequest: {
             include: {
-                tenant: true,
+                tenant:{
+                  omit:{
+                    password:true,
+                  }
+                },
                 property: true,
             }
         }
@@ -147,7 +154,167 @@ const verifyPaymentFromDB = async (tenantId: string, sessionId: string) => {
   return updated;
 };
 
+
+
+//stripe webhook handler
+const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      config.stripe_webhook_secret
+    );
+  } catch (error) {
+    throw new Error(
+      `Webhook signature verification failed: ${(error as Error).message}`
+    );
+  }
+
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      await prisma.payment.updateMany({
+        where: { transactionId: session.id },
+        data: { status: "PAID", paidAt: new Date() },
+      });
+      break;
+    }
+
+    case "checkout.session.expired": {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      await prisma.payment.updateMany({
+        where: { transactionId: session.id },
+        data: { status: "FAILED" },
+      });
+      break;
+    }
+
+    default:
+      // onno event gula amra ekhon handle korchi na
+      break;
+  }
+
+  return { received: true };
+};
+
+
+
+
+
+
+
+
+const getMyPaymentHistoryFromDB = async (tenantId: string, query: PaymentQueryValidated) => {
+  
+  const page = query.page && query.page > 0 ? query.page : 1;
+  const limit = query.limit && query.limit > 0 ? query.limit : 10;
+  const skip = (page - 1) * limit;
+
+  const where: Prisma.PaymentWhereInput = {
+    rentalRequest: { tenantId }, 
+    ...(query.status ? { status: query.status } : {}),
+  };
+
+  const [payments, total] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      include: {
+        rentalRequest: {
+          include: { property: { select: { id: true, title: true, location: true } } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.payment.count({ where }),
+  ]);
+
+  return {
+    data: payments,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+
+//get singel payment by id
+
+// const getPaymentByIdFromDB = async (
+//   paymentId: string,
+//   userId: string,
+//   userRole: string
+// ) => {
+//   const payment = await prisma.payment.findUnique({
+//     where: { id: paymentId },
+//     include: {
+//       rentalRequest: {
+//         include: { property: true },
+//       },
+//     },
+//   });
+
+//   if (!payment) {
+//     throw new Error("Payment not found");
+//   }
+
+//   const isOwnerTenant = payment.tenantId === userId;
+//   const isOwnerLandlord = payment.rentalRequest.property.landlordId === userId;
+//   const isAdmin = userRole === "ADMIN";
+
+//   if (!isOwnerTenant && !isOwnerLandlord && !isAdmin) {
+//     throw new Error("You do not have access to this payment");
+//   }
+
+//   return payment;
+// };
+
+const getPaymentByIdFromDB = async (
+  paymentId: string,
+  userId: string,
+  userRole: Role
+) => {
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: {
+      rentalRequest: {
+        include: { property: true },
+      },
+    },
+  });
+
+  if (!payment) {
+    throw new AppError('Payment not found', httpStatus.NOT_FOUND);
+  }
+
+  const isOwnerTenant = payment.rentalRequest.tenantId === userId; // ← ফিক্স
+  const isOwnerLandlord = payment.rentalRequest.property.landlordId === userId;
+  const isAdmin = userRole === 'ADMIN';
+
+  if (!isOwnerTenant && !isOwnerLandlord && !isAdmin) {
+    throw new AppError('You do not have access to this payment', httpStatus.FORBIDDEN);
+  }
+
+  return payment;
+};
+
+
+
+
+
+
 export const paymentService = {
   createPaymentSessionIntoDB,
+  handleStripeWebhook,
   verifyPaymentFromDB,
+ getMyPaymentHistoryFromDB,
+ getPaymentByIdFromDB,
 };
