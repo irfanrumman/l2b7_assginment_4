@@ -1,7 +1,8 @@
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
-import { CreatePropertiesvalidated, UpdatePropertyValidated } from "./landLord.validation";
+import { CreatePropertiesvalidated, RentalQueryValidated, UpdatePropertyValidated } from "./landLord.validation";
+import { Prisma } from "../../../generated/prisma/client";
 
 
 
@@ -113,7 +114,57 @@ const updatePropertyInDB = async (
   return updatedProperty;
 };
 
+
+
+const getLandlordRentalAllRequests = async (
+  landlordId: string,
+  query: RentalQueryValidated
+) => {
+ 
+  const page = Math.max(Number(query.page) || 1, 1);
+  const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 100);
+  const skip = (page - 1) * limit;
+
+  
+  const where: Prisma.RentalRequestWhereInput = {
+    property: { 
+        landlordId 
+    }, 
+    ...(query.status ? { status: query.status } : {}), 
+  };
+
+ 
+  const [rentals, total] = await Promise.all([
+    prisma.rentalRequest.findMany({
+      where,
+      include: {
+        tenant: { select: { id: true, name: true, email: true, phone: true } },
+        property: { select: { id: true, title: true, location: true } },
+      },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.rentalRequest.count({ where }),
+  ]);
+
+  
+  return {
+    data: rentals,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+
+
+
 export const landLordService = {
   createPropertyIntoDB,
   updatePropertyInDB,
+  getLandlordRentalAllRequests,
 };

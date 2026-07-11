@@ -25,8 +25,19 @@ export const updatePropertySchema = z.object({
 
 
 
+export const rentalQuerySchema = z.object({
+  status: z
+    .enum(["PENDING", "APPROVED", "REJECTED", "ACTIVE", "COMPLETED"])
+    .optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
+});
+
+
+
 
 
 export type CreatePropertiesvalidated = z.infer<typeof createPropertiesSchema>;
 export type PropertyIdValidated = z.infer<typeof propertyIdSchema>;
 export type UpdatePropertyValidated = z.infer<typeof updatePropertySchema>;
+export type RentalQueryValidated = z.infer<typeof rentalQuerySchema>;

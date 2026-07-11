@@ -3,7 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { landLordService } from "./landLord.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
-import { CreatePropertiesvalidated, UpdatePropertyValidated } from "./landLord.validation";
+import { CreatePropertiesvalidated, RentalQueryValidated, UpdatePropertyValidated } from "./landLord.validation";
 
 
 
@@ -41,9 +41,24 @@ const updateProperty = catchAsync(
 );
 
 
+const getRentalRequestsForLandlord = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const landlordId = req.user?.id as string; 
+    const query = req.validatedQuery as RentalQueryValidated;
+    const result = await landLordService.getLandlordRentalAllRequests(landlordId, query);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Rental requests fetched successfully",
+      data: result,
+    });
+  }
+);
 
 
 export const landLordController = {
   createProperty,
   updateProperty,
+  getRentalRequestsForLandlord,
 };
