@@ -2,9 +2,12 @@
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { AppError } from "../utils/AppError";
+import { ZodError } from "zod";
 
 
 export const globalErrorHandler = (
+
+
   err: unknown,
   req: Request,
   res: Response,
@@ -27,3 +30,6 @@ export const globalErrorHandler = (
     errorDetails,
   });
 };
+
+
+
