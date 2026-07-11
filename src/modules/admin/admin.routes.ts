@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validate } from "../../middelwares/validate";
 import { auth } from "../../middelwares/auth";
-import { getAllUsersSchema } from "./admin.validation";
+import { adminRentalQuerySchema, getAllUsersSchema, updateUserStatusSchema, userIdSchema } from "./admin.validation";
 import { Role } from "../../../generated/prisma/enums";
 import { adminController } from "./admin.controller";
 
@@ -10,16 +10,14 @@ const router = Router();
 
 router.get("/users", auth(Role.ADMIN), validate(getAllUsersSchema, "query"), adminController.getAllUsers);
 
-// router.patch(
-//   "/users/:id",
-//   validate(userIdSchema, "params"),
-//   validate(updateUserStatusSchema),
-//   updateUserStatus
-// );
+router.patch("/users/:id", auth(Role.ADMIN),
+  validate(userIdSchema, "params"),
+  validate(updateUserStatusSchema),
+  adminController.updateUserStatus);
 
-// router.get("/properties", validate(adminQuerySchema, "query"), getAllProperties);
+router.get("/properties", auth(Role.ADMIN), validate(getAllUsersSchema, "query"), adminController.getAllPropertiesForAdmin);
 
-// router.get("/rentals", validate(adminQuerySchema, "query"), getAllRentals);
+router.get("/rentals", auth(Role.ADMIN), validate(adminRentalQuerySchema, "query"), adminController.getAllRentalsForAdmin);
 
 
 

@@ -9,6 +9,8 @@ import { categoryRoutes } from "./modules/category/category.routes";
 import { propertyRoutes } from "./modules/property/property.routes";
 import { rentalRoutes } from "./modules/rental/rental.routes";
 import { adminRoutes } from "./modules/admin/admin.routes";
+import { reviewRoutes } from "./modules/review/review.routes";
+import { paymentRoutes } from "./modules/payment/payment.routes";
 
 
 
@@ -16,7 +18,7 @@ const app: Application = express();
 
 app.use(
   cors({
-    origin: config.app_ulr,
+    origin: config.app_url,
     credentials: true,
   }),
 );
@@ -38,10 +40,11 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/rentals", rentalRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/payments", paymentRoutes);
 
 
-// app.use("/api/payments", paymentRoutes);
-// app.use("/api/reviews", reviewRoutes);
+
 
 
 

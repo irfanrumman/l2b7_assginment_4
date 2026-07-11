@@ -12,7 +12,7 @@ model RentalRequest {
 
   tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  payments Payment[]
+  payment Payment?
   review   Review?
 
   @@map("rental_requests")

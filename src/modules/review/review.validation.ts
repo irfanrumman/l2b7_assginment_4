@@ -1,0 +1,9 @@
+import { z } from 'zod';
+
+export const createReviewSchema = z.object({
+  rentalRequestId: z.string().uuid('Invalid rental request ID'),
+  rating: z.coerce.number().int().min(1, 'Rating must be at least 1').max(5, 'Rating must be at most 5'),
+  comment: z.string().max(1000, 'Comment must be under 1000 characters').optional(),
+});
+
+export type CreateReviewInput = z.infer<typeof createReviewSchema>;

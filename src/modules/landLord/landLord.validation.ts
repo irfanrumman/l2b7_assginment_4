@@ -38,9 +38,18 @@ export const rentalIdSchema = z.object({
   id: z.string().uuid('Invalid rental ID'),
 });
 
+
+
 export const updateRentalStatusSchema = z.object({
-  status: z.enum(['APPROVED', 'REJECTED']),
+  status: z.preprocess(
+    (val) => (typeof val === 'string' ? val.toUpperCase() : val),
+    z.enum(['APPROVED', 'REJECTED'], {
+      message: 'Status must be APPROVED or REJECTED',
+    })
+  ),
 });
+
+
 
 
 
