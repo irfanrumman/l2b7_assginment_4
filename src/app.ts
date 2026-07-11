@@ -8,6 +8,7 @@ import { landlordRoutes } from "./modules/landLord/landLord.routes";
 import { categoryRoutes } from "./modules/category/category.routes";
 import { propertyRoutes } from "./modules/property/property.routes";
 import { rentalRoutes } from "./modules/rental/rental.routes";
+import { adminRoutes } from "./modules/admin/admin.routes";
 
 
 
@@ -36,11 +37,12 @@ app.use ("/api/landlord", landlordRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/rentals", rentalRoutes);
+app.use("/api/admin", adminRoutes);
 
 
 // app.use("/api/payments", paymentRoutes);
 // app.use("/api/reviews", reviewRoutes);
-// app.use("/api/admin", adminRoutes);
+
 
 
 

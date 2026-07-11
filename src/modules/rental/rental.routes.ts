@@ -12,6 +12,7 @@ router.post("/", auth(Role.TENANT), validate(createRentalRequestSchema), rentalC
 
 
 router.get("/", auth(Role.TENANT), validate(rentalRequestAllGetSchema, "query"), rentalController.getAllRentalRequests);
+
 router.get("/:id", auth(Role.TENANT), validate(rentalIdSchema, "params"), rentalController.getRentalRequestById);
 
 export const rentalRoutes = router;

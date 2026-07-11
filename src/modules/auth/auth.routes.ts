@@ -9,6 +9,7 @@ const router = Router();
 
 
 router.post('/register', validate(registerUserSchema), authController.registerUser);  
+
 router.post('/login', validate(loginUserSchema), authController.loginUser);                 
 router.post("/refresh-token", authController.refreshToken) 
 

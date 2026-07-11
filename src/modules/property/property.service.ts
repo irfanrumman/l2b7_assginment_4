@@ -1,6 +1,8 @@
 import { Prisma } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
+import { AppError } from "../../utils/AppError";
 import { PropertyGetValidated } from "./property.validation";
+import httpStatus from "http-status";
 
 
 
@@ -110,6 +112,68 @@ const whereConditions: Prisma.PropertyWhereInput = {
 // };
 
 
+
+// export const getSinglePropertyById = async (id: string) => {
+//   const result = await prisma.property.findUnique({
+//     where: { id },
+//     include: {
+//       landlord: true,
+//       category: true,
+//       rentalRequests: true,
+//       reviews: {
+//         include: {
+//           tenant: true,
+//         },
+//       },
+//     },
+//   });
+
+//   if (!result) {
+//     throw new AppError("Property not found", httpStatus.NOT_FOUND);
+//   }
+
+//   return {
+//     ...result,
+//     landlord: sanitizeUser(result.landlord),
+//     reviews: result.reviews.map((review) => ({
+//       ...review,
+//       tenant: sanitizeUser(review.tenant),
+//     })),
+//   };
+// };
+
+
+const getSinglePropertyById = async (id: string) => {
+    
+  const result = await prisma.property.findUnique({
+
+    where: { id },
+    include: {
+      landlord: {
+        select: { id: true, name: true, email: true, phone: true, role: true },
+      },
+      category: {
+        select: { id: true, name: true, description: true },
+      },
+      reviews: {
+        include: {
+          tenant: { select: { id: true, name: true } },
+        },
+      },
+      
+    },
+  });
+
+  if (!result) {
+    throw new AppError('Property not found', httpStatus.NOT_FOUND);
+  }
+
+  return result;
+};
+
+
+
 export const propertyService = {
   getAllPropertiesFromDB,
+    getSinglePropertyById,
 };

@@ -17,6 +17,9 @@ export const propertyGetSchema = z.object({
 });
 
 
+export const propertyIdSchema = z.object({
+  id: z.string().uuid('Invalid property ID'),
+});
 
 
 export type PropertyGetValidated = z.infer<typeof propertyGetSchema>;
