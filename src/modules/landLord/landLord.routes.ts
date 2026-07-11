@@ -3,7 +3,7 @@ import { auth } from "../../middelwares/auth";
 import { Role } from "../../../generated/prisma/enums";
 import { validate } from "../../middelwares/validate";
 import { createPropertiesSchema, propertyIdSchema, rentalQuerySchema, updatePropertySchema } from "./landLord.validation";
-import { landLordController, landLordController } from "./landLord.controller";
+import { landLordController } from "./landLord.controller";
 
 const router = Router();
 
@@ -21,11 +21,8 @@ router.put("/properties/:id", auth(Role.LANDLORD),
 router.get("/requests", auth(Role.LANDLORD),
   validate(rentalQuerySchema, "query"), landLordController.getRentalRequestsForLandlord);
 
-// router.delete(
-//   "/properties/:id",
-//   validate(propertyIdSchema, "params"),
-//   deleteLandlordProperty
-// );
+router.delete("/properties/:id", auth(Role.LANDLORD),validate(propertyIdSchema, "params"), landLordController.deleteProperty
+);
 
 
 // router.patch("/requests/:id",

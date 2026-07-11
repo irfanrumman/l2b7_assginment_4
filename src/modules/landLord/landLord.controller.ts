@@ -57,8 +57,25 @@ const getRentalRequestsForLandlord = catchAsync(
 );
 
 
+const deleteProperty = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const landlordId = req.user?.id as string; 
+    const propertyId = req.params.id as string;
+
+    await landLordService.deletePropertyFromDB(propertyId, landlordId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Property deleted successfully",
+      data: null,
+    });
+  }
+);
+
 export const landLordController = {
   createProperty,
   updateProperty,
   getRentalRequestsForLandlord,
+    deleteProperty,
 };

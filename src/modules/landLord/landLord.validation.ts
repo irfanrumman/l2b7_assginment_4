@@ -11,7 +11,7 @@ export const createPropertiesSchema = z.object({
 
 
 export const propertyIdSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().uuid('Invalid property ID'),
 });
 
 export const updatePropertySchema = z.object({
@@ -32,6 +32,8 @@ export const rentalQuerySchema = z.object({
   page: z.string().optional(),
   limit: z.string().optional(),
 });
+
+
 
 
 
