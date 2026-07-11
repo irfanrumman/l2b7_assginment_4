@@ -10,6 +10,21 @@ export const createRentalRequestSchema = z.object({
 });
 
 
+export const rentalRequestAllGetSchema = z.object({
+  status: z
+    .enum(["PENDING", "APPROVED", "REJECTED", "ACTIVE", "COMPLETED"])
+    .optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
+});
+
+export const rentalIdSchema = z.object({
+  id: z.string().uuid('Invalid rental ID'),
+});
 
 
 export type CreateRentalRequestValidation = z.infer<typeof createRentalRequestSchema>;
+
+export type RentalRequestAllGetValidation = z.infer<typeof rentalRequestAllGetSchema>;
+
+export type RentalIdValidation = z.infer<typeof rentalIdSchema>;
