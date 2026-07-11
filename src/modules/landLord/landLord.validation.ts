@@ -34,8 +34,13 @@ export const rentalQuerySchema = z.object({
 });
 
 
+export const rentalIdSchema = z.object({
+  id: z.string().uuid('Invalid rental ID'),
+});
 
-
+export const updateRentalStatusSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED']),
+});
 
 
 
@@ -43,3 +48,5 @@ export type CreatePropertiesvalidated = z.infer<typeof createPropertiesSchema>;
 export type PropertyIdValidated = z.infer<typeof propertyIdSchema>;
 export type UpdatePropertyValidated = z.infer<typeof updatePropertySchema>;
 export type RentalQueryValidated = z.infer<typeof rentalQuerySchema>;
+export type RentalIdValidated = z.infer<typeof rentalIdSchema>;
+export type UpdateRentalStatusValidated = z.infer<typeof updateRentalStatusSchema>;

@@ -3,7 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { landLordService } from "./landLord.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
-import { CreatePropertiesvalidated, RentalQueryValidated, UpdatePropertyValidated } from "./landLord.validation";
+import { CreatePropertiesvalidated, RentalQueryValidated, UpdatePropertyValidated, UpdateRentalStatusValidated } from "./landLord.validation";
 
 
 
@@ -73,9 +73,33 @@ const deleteProperty = catchAsync(
   }
 );
 
+
+
+const updateRentalStatus = catchAsync(async (req: Request, res: Response) => {
+
+  const landlordId = req.user?.id as string;
+  const rentalId = req.params.id as string;
+  const { status } = req.body as UpdateRentalStatusValidated;
+
+  const result = await landLordService.updateRentalStatusInDB(rentalId, landlordId, status);
+  
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Rental request status updated successfully',
+    data: result,
+  });
+});
+
+
+
+
+
 export const landLordController = {
   createProperty,
   updateProperty,
   getRentalRequestsForLandlord,
     deleteProperty,
+    updateRentalStatus,
 };

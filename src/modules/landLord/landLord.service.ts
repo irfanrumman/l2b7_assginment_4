@@ -2,7 +2,7 @@ import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
 import { CreatePropertiesvalidated, RentalQueryValidated, UpdatePropertyValidated } from "./landLord.validation";
-import { Prisma } from "../../../generated/prisma/client";
+import { Prisma} from "../../../generated/prisma/client";
 
 
 
@@ -161,6 +161,8 @@ const getLandlordRentalAllRequests = async (
 };
 
 
+
+
 const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
@@ -179,9 +181,60 @@ const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
   });
 };
 
+
+
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ['APPROVED', 'REJECTED'],
+  APPROVED: [],
+  REJECTED: [],
+  ACTIVE: [],
+  COMPLETED: [],
+};
+
+const updateRentalStatusInDB = async (
+  rentalId: string,
+  landlordId: string,
+  newStatus: 'APPROVED' | 'REJECTED'
+) => {
+    
+  const rentalRequest = await prisma.rentalRequest.findUnique({
+    where: { id: rentalId },
+    include: { property: true },
+  });
+
+  if (!rentalRequest) {
+    throw new AppError('Rental request not found', httpStatus.NOT_FOUND);
+  }
+
+  if (rentalRequest.property.landlordId !== landlordId) {
+    throw new AppError('You are not authorized to update this rental request', httpStatus.FORBIDDEN);
+  }
+
+  const allowedNextStatuses = ALLOWED_TRANSITIONS[rentalRequest.status] ?? [];
+  if (!allowedNextStatuses.includes(newStatus)) {
+    throw new AppError(
+      `Cannot change status from ${rentalRequest.status} to ${newStatus}`,
+      httpStatus.CONFLICT
+    );
+  }
+
+  const updatedRentalRequest = await prisma.rentalRequest.update({
+    where: { id: rentalId },
+    data: { status: newStatus },
+  });
+
+  return updatedRentalRequest;
+};
+
+
+
+
+
+
 export const landLordService = {
   createPropertyIntoDB,
   updatePropertyInDB,
   getLandlordRentalAllRequests,
   deletePropertyFromDB,
+  updateRentalStatusInDB,
 };
