@@ -1,17 +1,10 @@
-import { Prisma } from "../../../generated/prisma/client";
+import { Prisma } from "../../../prisma/generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { PropertyGetValidated } from "./property.validation";
 import httpStatus from "http-status";
 
-
-
-
-
-
 const getAllPropertiesFromDB = async (filters: PropertyGetValidated) => {
-
- 
   const {
     location,
     minPrice,
@@ -26,45 +19,52 @@ const getAllPropertiesFromDB = async (filters: PropertyGetValidated) => {
   const pageNumber = page && Number(page) > 0 ? Number(page) : 1;
   const pageSize = limit && Number(limit) > 0 ? Number(limit) : 10;
 
-
-const whereConditions: Prisma.PropertyWhereInput = {
-  ...(location ? { location: { contains: location, mode: 'insensitive' } } : {}),
-  ...(categoryId ? { categoryId } : {}),
-  ...(isAvailable !== undefined
-    ? { isAvailable: isAvailable ? true : false }
-    : {}),
-  ...(minPrice !== undefined || maxPrice !== undefined
-    ? {
-        price: {
-          ...(minPrice !== undefined ? { gte: minPrice } : {}),
-          ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
-        },
-      }
-    : {}),
-  ...(search
-    ? {
-        OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-          { category: { name: { contains: search, mode: 'insensitive' } } },
-        ],
-      }
-    : {}),
-};
+  const whereConditions: Prisma.PropertyWhereInput = {
+    ...(location
+      ? { location: { contains: location, mode: "insensitive" } }
+      : {}),
+    ...(categoryId ? { categoryId } : {}),
+    ...(isAvailable !== undefined
+      ? { isAvailable: isAvailable ? true : false }
+      : {}),
+    ...(minPrice !== undefined || maxPrice !== undefined
+      ? {
+          price: {
+            ...(minPrice !== undefined ? { gte: minPrice } : {}),
+            ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
+          },
+        }
+      : {}),
+    ...(search
+      ? {
+          OR: [
+            { title: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+            { category: { name: { contains: search, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
 
   const [properties, total] = await Promise.all([
     prisma.property.findMany({
       where: whereConditions,
       include: {
         landlord: {
-          select: { id: true, name: true, email: true, phone: true, role: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+          },
         },
         category: {
           select: { id: true, name: true, description: true },
         },
         reviews: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       skip: (pageNumber - 1) * pageSize,
       take: pageSize,
     }),
@@ -83,70 +83,8 @@ const whereConditions: Prisma.PropertyWhereInput = {
 };
 
 
-
-
-
-// const getPropertyByIdFromDB = async (id: string) => {
-//   const property = await prisma.property.findUnique({
-//     where: { id },
-//     include: {
-//       landlord: {
-//         select: { id: true, name: true, email: true, phone: true, role: true },
-//       },
-//       category: {
-//         select: { id: true, name: true, description: true },
-//       },
-//       reviews: {
-//         include: {
-//           tenant: { select: { id: true, name: true } },
-//         },
-//       },
-//     },
-//   });
-
-//   if (!property) {
-//     throw new AppError('Property not found', httpStatus.NOT_FOUND);
-//   }
-
-//   return property;
-// };
-
-
-
-// export const getSinglePropertyById = async (id: string) => {
-//   const result = await prisma.property.findUnique({
-//     where: { id },
-//     include: {
-//       landlord: true,
-//       category: true,
-//       rentalRequests: true,
-//       reviews: {
-//         include: {
-//           tenant: true,
-//         },
-//       },
-//     },
-//   });
-
-//   if (!result) {
-//     throw new AppError("Property not found", httpStatus.NOT_FOUND);
-//   }
-
-//   return {
-//     ...result,
-//     landlord: sanitizeUser(result.landlord),
-//     reviews: result.reviews.map((review) => ({
-//       ...review,
-//       tenant: sanitizeUser(review.tenant),
-//     })),
-//   };
-// };
-
-
 const getSinglePropertyById = async (id: string) => {
-    
   const result = await prisma.property.findUnique({
-
     where: { id },
     include: {
       landlord: {
@@ -160,20 +98,17 @@ const getSinglePropertyById = async (id: string) => {
           tenant: { select: { id: true, name: true } },
         },
       },
-      
     },
   });
 
   if (!result) {
-    throw new AppError('Property not found', httpStatus.NOT_FOUND);
+    throw new AppError("Property not found", httpStatus.NOT_FOUND);
   }
 
   return result;
 };
 
-
-
 export const propertyService = {
   getAllPropertiesFromDB,
-    getSinglePropertyById,
+  getSinglePropertyById,
 };

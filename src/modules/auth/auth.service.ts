@@ -1,21 +1,15 @@
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import config from "../../config";
 import { jwtUtils } from "../../utils/jwt";
-import {prisma} from "../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import bcrypt from "bcryptjs";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
-import {LoginUser, RegisterUser, UpdateUserProfile } from "./auth.validation";
-import { Role } from "../../../generated/prisma/enums";
-import { Prisma } from "../../../generated/prisma/client";
-
-
-
-
-
+import { LoginUser, RegisterUser, UpdateUserProfile } from "./auth.validation";
+import { Role } from "../../../prisma/generated/prisma/enums";
+import { Prisma } from "../../../prisma/generated/prisma/client";
 
 const registerUserIntoDB = async (payload: RegisterUser) => {
-  
   const { name, email, password, role, phone } = payload;
 
   const isUserExist = await prisma.user.findUnique({
@@ -39,7 +33,7 @@ const registerUserIntoDB = async (payload: RegisterUser) => {
       email,
       password: hashedPassword,
       role,
-     ...(phone ? { phone } : {}),
+      ...(phone ? { phone } : {}),
     },
     omit: {
       password: true,
@@ -48,9 +42,6 @@ const registerUserIntoDB = async (payload: RegisterUser) => {
 
   return createdUser;
 };
-
-
-
 
 const loginUserIntoDB = async (payload: LoginUser) => {
   const { email, password } = payload;
@@ -61,9 +52,12 @@ const loginUserIntoDB = async (payload: LoginUser) => {
     },
   });
 
-   if(user.status === "BANNED") {
-      throw new AppError("Your account has been banned. Please contact support.", httpStatus.FORBIDDEN);
-    }
+  if (user.status === "BANNED") {
+    throw new AppError(
+      "Your account has been banned. Please contact support.",
+      httpStatus.FORBIDDEN,
+    );
+  }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -79,17 +73,16 @@ const loginUserIntoDB = async (payload: LoginUser) => {
   };
 
   const accessToken = jwtUtils.createToken(
-    jwtPayload, 
-    config.jwt_access_secret, 
-    config.jwt_access_expires_in as SignOptions
-);
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
 
- const refreshToken = jwtUtils.createToken(
-    jwtPayload, 
-    config.jwt_refresh_secret, 
-    config.jwt_refresh_expires_in as SignOptions
-);
-
+  const refreshToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_refresh_secret,
+    config.jwt_refresh_expires_in as SignOptions,
+  );
 
   return {
     accessToken,
@@ -97,56 +90,53 @@ const loginUserIntoDB = async (payload: LoginUser) => {
   };
 };
 
+const refreshToken = async (refreshToken: string) => {
+  const verifiedRefreshToken = jwtUtils.verifyToken(
+    refreshToken,
+    config.jwt_refresh_secret,
+  );
 
-const refreshToken = async (refreshToken: string)=>{
-  
-  const verifiedRefreshToken = jwtUtils.verifyToken(refreshToken, config.jwt_refresh_secret)
-  
-  if(!verifiedRefreshToken.success){
-    throw new Error (verifiedRefreshToken.error)
+  if (!verifiedRefreshToken.success) {
+    throw new Error(verifiedRefreshToken.error);
   }
 
-  const {id} = verifiedRefreshToken.data as JwtPayload;
+  const { id } = verifiedRefreshToken.data as JwtPayload;
 
   const user = await prisma.user.findUniqueOrThrow({
-    where:{
+    where: {
       id,
-    }
-  })
- if(user.status === "BANNED") {
-   throw new AppError("User Is Banned.", httpStatus.FORBIDDEN);
- }
+    },
+  });
+  if (user.status === "BANNED") {
+    throw new AppError("User Is Banned.", httpStatus.FORBIDDEN);
+  }
 
- const jwtPayload = {
-  id,
-  name: user.name,
-  email: user.email,
-  role: user.role
- }
+  const jwtPayload = {
+    id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
 
- const accessToken = jwtUtils.createToken(
-  jwtPayload,
-  config.jwt_access_secret,
-  config.jwt_access_expires_in as SignOptions
- )
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in as SignOptions,
+  );
 
- return {accessToken}
-}
-
-
+  return { accessToken };
+};
 
 const getMyProfileFromDB = async (userId: string, role: Role) => {
-
   const includeOptions: Prisma.UserInclude =
     role === Role.LANDLORD
       ? { properties: true }
       : role === Role.TENANT
-      ? { rentalRequests: true, reviews: true }
-      : role === Role.ADMIN
-      ? {}
-      : {}; 
-       
-  
+        ? { rentalRequests: true, reviews: true }
+        : role === Role.ADMIN
+          ? {}
+          : {};
+
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -154,29 +144,28 @@ const getMyProfileFromDB = async (userId: string, role: Role) => {
     omit: {
       password: true,
     },
-    include: includeOptions
+    include: includeOptions,
   });
 
-  
-    if (!user) {
+  if (!user) {
     throw new AppError("User not found.", httpStatus.UNAUTHORIZED);
   }
 
-  if(user.status === "BANNED") {
-    throw new AppError("Your account has been banned. Please contact support.", httpStatus.FORBIDDEN);
+  if (user.status === "BANNED") {
+    throw new AppError(
+      "Your account has been banned. Please contact support.",
+      httpStatus.FORBIDDEN,
+    );
   }
 
   return user;
 };
 
-
-
-
-const updateMyProfileInDB = async (userId: string, payload: UpdateUserProfile) => {
-  
+const updateMyProfileInDB = async (
+  userId: string,
+  payload: UpdateUserProfile,
+) => {
   const updatedData = payload;
-
-  
 
   const updatedUser = await prisma.user.update({
     where: {
@@ -193,15 +182,10 @@ const updateMyProfileInDB = async (userId: string, payload: UpdateUserProfile) =
   return updatedUser;
 };
 
-
-
-
-
-
 export const authService = {
   registerUserIntoDB,
   loginUserIntoDB,
   getMyProfileFromDB,
   updateMyProfileInDB,
   refreshToken,
-}
+};

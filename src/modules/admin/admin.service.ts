@@ -1,11 +1,12 @@
-import { Prisma } from '../../../generated/prisma/client';
-import { prisma } from '../../lib/prisma';
-import { AppError } from '../../utils/AppError';
-import { AdminPropertyGetValidated, AdminRentalQueryValidated, GetAllUsersValidation } from './admin.validation';
-import httpStatus from 'http-status';
-
-
-
+import { Prisma } from "../../../prisma/generated/prisma/client";
+import { prisma } from "../../lib/prisma";
+import { AppError } from "../../utils/AppError";
+import {
+  AdminPropertyGetValidated,
+  AdminRentalQueryValidated,
+  GetAllUsersValidation,
+} from "./admin.validation";
+import httpStatus from "http-status";
 
 const getAllUsersFromDB = async (filters: GetAllUsersValidation) => {
   const { role, status, search, page, limit } = filters;
@@ -19,8 +20,8 @@ const getAllUsersFromDB = async (filters: GetAllUsersValidation) => {
     ...(search
       ? {
           OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
           ],
         }
       : {}),
@@ -39,7 +40,7 @@ const getAllUsersFromDB = async (filters: GetAllUsersValidation) => {
         createdAt: true,
         // password ইচ্ছাকৃতভাবে বাদ — কখনো এখানে আসবে না
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       skip: (pageNumber - 1) * pageSize,
       take: pageSize,
     }),
@@ -57,30 +58,31 @@ const getAllUsersFromDB = async (filters: GetAllUsersValidation) => {
   };
 };
 
-
-
 const updateUserStatusInDB = async (
   targetUserId: string,
   adminId: string,
-  newStatus: 'ACTIVE' | 'BANNED'
+  newStatus: "ACTIVE" | "BANNED",
 ) => {
-
   const targetUser = await prisma.user.findUnique({
     where: { id: targetUserId },
   });
 
   if (!targetUser) {
-    throw new AppError('User not found', httpStatus.NOT_FOUND);
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
   }
 
-  
   if (targetUserId === adminId) {
-    throw new AppError('You cannot change your own account status', httpStatus.FORBIDDEN);
+    throw new AppError(
+      "You cannot change your own account status",
+      httpStatus.FORBIDDEN,
+    );
   }
 
- 
-  if (targetUser.role === 'ADMIN') {
-    throw new AppError('Cannot change status of another admin account', httpStatus.FORBIDDEN);
+  if (targetUser.role === "ADMIN") {
+    throw new AppError(
+      "Cannot change status of another admin account",
+      httpStatus.FORBIDDEN,
+    );
   }
 
   const updatedUser = await prisma.user.update({
@@ -92,28 +94,36 @@ const updateUserStatusInDB = async (
       email: true,
       role: true,
       status: true,
-     createdAt: true,
-     updatedAt: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
 
   return updatedUser;
 };
 
-
-
 const getAllPropertiesForAdmin = async (filters: AdminPropertyGetValidated) => {
-
-  const { location, minPrice, maxPrice, categoryId, search, isAvailable, page, limit } = filters;
+  const {
+    location,
+    minPrice,
+    maxPrice,
+    categoryId,
+    search,
+    isAvailable,
+    page,
+    limit,
+  } = filters;
 
   const pageNumber = page && page > 0 ? page : 1;
   const pageSize = limit && limit > 0 ? limit : 10;
 
   const whereConditions: Prisma.PropertyWhereInput = {
-    ...(location ? { location: { contains: location, mode: 'insensitive' } } : {}),
+    ...(location
+      ? { location: { contains: location, mode: "insensitive" } }
+      : {}),
     ...(categoryId ? { categoryId } : {}),
     ...(isAvailable !== undefined
-      ? { availabilityStatus: isAvailable ? 'AVAILABLE' : 'RENTED' }
+      ? { availabilityStatus: isAvailable ? "AVAILABLE" : "RENTED" }
       : {}),
     ...(minPrice !== undefined || maxPrice !== undefined
       ? {
@@ -126,8 +136,8 @@ const getAllPropertiesForAdmin = async (filters: AdminPropertyGetValidated) => {
     ...(search
       ? {
           OR: [
-            { title: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
+            { title: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
           ],
         }
       : {}),
@@ -137,10 +147,12 @@ const getAllPropertiesForAdmin = async (filters: AdminPropertyGetValidated) => {
     prisma.property.findMany({
       where: whereConditions,
       include: {
-        landlord: { select: { id: true, name: true, email: true, phone: true } },
+        landlord: {
+          select: { id: true, name: true, email: true, phone: true },
+        },
         category: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       skip: (pageNumber - 1) * pageSize,
       take: pageSize,
     }),
@@ -158,10 +170,7 @@ const getAllPropertiesForAdmin = async (filters: AdminPropertyGetValidated) => {
   };
 };
 
-
-
 const getAllRentalsForAdmin = async (filters: AdminRentalQueryValidated) => {
-
   const { status, page, limit } = filters;
 
   const pageNumber = page && page > 0 ? page : 1;
@@ -169,7 +178,6 @@ const getAllRentalsForAdmin = async (filters: AdminRentalQueryValidated) => {
 
   const whereConditions: Prisma.RentalRequestWhereInput = {
     ...(status ? { status } : {}),
-    
   };
 
   const [rentals, total] = await Promise.all([
@@ -187,7 +195,7 @@ const getAllRentalsForAdmin = async (filters: AdminRentalQueryValidated) => {
         },
         payments: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       skip: (pageNumber - 1) * pageSize,
       take: pageSize,
     }),
@@ -205,13 +213,9 @@ const getAllRentalsForAdmin = async (filters: AdminRentalQueryValidated) => {
   };
 };
 
-
-
-
-
 export const adminService = {
   getAllUsersFromDB,
-    updateUserStatusInDB,
-    getAllPropertiesForAdmin,
-    getAllRentalsForAdmin,
+  updateUserStatusInDB,
+  getAllPropertiesForAdmin,
+  getAllRentalsForAdmin,
 };

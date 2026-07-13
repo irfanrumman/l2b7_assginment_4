@@ -1,11 +1,12 @@
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import httpStatus from "http-status";
-import { CreatePropertiesvalidated, RentalQueryValidated, UpdatePropertyValidated } from "./landLord.validation";
-import { Prisma} from "../../../generated/prisma/client";
-
-
-
+import {
+  CreatePropertiesvalidated,
+  RentalQueryValidated,
+  UpdatePropertyValidated,
+} from "./landLord.validation";
+import { Prisma } from "../../../prisma/generated/prisma/client";
 
 const createPropertyIntoDB = async (
   landlordId: string,
@@ -55,8 +56,8 @@ const createPropertyIntoDB = async (
       category: {
         select: {
           id: true,
-            name: true,
-            description: true,
+          name: true,
+          description: true,
         },
       },
     },
@@ -65,9 +66,9 @@ const createPropertyIntoDB = async (
   return createdProperty;
 };
 
-
 const updatePropertyInDB = async (
-  propertyId: string, landlordId: string,
+  propertyId: string,
+  landlordId: string,
   payload: UpdatePropertyValidated,
 ) => {
   const property = await prisma.property.findUnique({
@@ -80,8 +81,11 @@ const updatePropertyInDB = async (
     throw new AppError("Property not found", httpStatus.NOT_FOUND);
   }
 
-    if (property.landlordId !== landlordId) {
-    throw new AppError('You are not authorized to update this property', httpStatus.FORBIDDEN);
+  if (property.landlordId !== landlordId) {
+    throw new AppError(
+      "You are not authorized to update this property",
+      httpStatus.FORBIDDEN,
+    );
   }
 
   const updatedProperty = await prisma.property.update({
@@ -93,12 +97,12 @@ const updatePropertyInDB = async (
     },
     include: {
       landlord: {
-        select: {   
-         id: true,
-            name: true,
-            email: true,
-            phone: true,
-            role: true,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          role: true,
         },
       },
       category: {
@@ -114,26 +118,21 @@ const updatePropertyInDB = async (
   return updatedProperty;
 };
 
-
-
 const getLandlordRentalAllRequests = async (
   landlordId: string,
-  query: RentalQueryValidated
+  query: RentalQueryValidated,
 ) => {
- 
   const page = Math.max(Number(query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 100);
   const skip = (page - 1) * limit;
 
-  
   const where: Prisma.RentalRequestWhereInput = {
-    property: { 
-        landlordId 
-    }, 
-    ...(query.status ? { status: query.status } : {}), 
+    property: {
+      landlordId,
+    },
+    ...(query.status ? { status: query.status } : {}),
   };
 
- 
   const [rentals, total] = await Promise.all([
     prisma.rentalRequest.findMany({
       where,
@@ -143,12 +142,11 @@ const getLandlordRentalAllRequests = async (
       },
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     }),
     prisma.rentalRequest.count({ where }),
   ]);
 
-  
   return {
     data: rentals,
     meta: {
@@ -160,9 +158,6 @@ const getLandlordRentalAllRequests = async (
   };
 };
 
-
-
-
 const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
@@ -173,7 +168,10 @@ const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
   }
 
   if (property.landlordId !== landlordId) {
-    throw new AppError('You are not authorized to delete this property', httpStatus.FORBIDDEN);
+    throw new AppError(
+      "You are not authorized to delete this property",
+      httpStatus.FORBIDDEN,
+    );
   }
 
   await prisma.property.delete({
@@ -181,10 +179,8 @@ const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
   });
 };
 
-
-
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  PENDING: ['APPROVED', 'REJECTED'],
+  PENDING: ["APPROVED", "REJECTED"],
   APPROVED: [],
   REJECTED: [],
   ACTIVE: [],
@@ -194,27 +190,29 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 const updateRentalStatusInDB = async (
   rentalId: string,
   landlordId: string,
-  newStatus: 'APPROVED' | 'REJECTED'
+  newStatus: "APPROVED" | "REJECTED",
 ) => {
-    
   const rentalRequest = await prisma.rentalRequest.findUnique({
     where: { id: rentalId },
     include: { property: true },
   });
 
   if (!rentalRequest) {
-    throw new AppError('Rental request not found', httpStatus.NOT_FOUND);
+    throw new AppError("Rental request not found", httpStatus.NOT_FOUND);
   }
 
   if (rentalRequest.property.landlordId !== landlordId) {
-    throw new AppError('You are not authorized to update this rental request', httpStatus.FORBIDDEN);
+    throw new AppError(
+      "You are not authorized to update this rental request",
+      httpStatus.FORBIDDEN,
+    );
   }
 
   const allowedNextStatuses = ALLOWED_TRANSITIONS[rentalRequest.status] ?? [];
   if (!allowedNextStatuses.includes(newStatus)) {
     throw new AppError(
       `Cannot change status from ${rentalRequest.status} to ${newStatus}`,
-      httpStatus.CONFLICT
+      httpStatus.CONFLICT,
     );
   }
 
@@ -225,11 +223,6 @@ const updateRentalStatusInDB = async (
 
   return updatedRentalRequest;
 };
-
-
-
-
-
 
 export const landLordService = {
   createPropertyIntoDB,
