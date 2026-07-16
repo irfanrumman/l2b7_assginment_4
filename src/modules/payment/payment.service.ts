@@ -8,6 +8,9 @@ import Stripe from "stripe";
 import { PaymentQueryValidated } from "./payment.validation";
 import { Prisma } from "../../../prisma/generated/prisma/client";
 
+
+
+
 const createPaymentSessionIntoDB = async (
   tenantId: string,
   payload: { rentalRequestId: string; provider: PaymentProvider },
@@ -161,6 +164,8 @@ const verifyPaymentFromDB = async (tenantId: string, sessionId: string) => {
   return updated;
 };
 
+
+
 //stripe webhook handler
 const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
   let event: Stripe.Event;
@@ -169,7 +174,7 @@ const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
     event = stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      config.stripe_webhook_secret,
+      config.stripe_webhook_secret || config.stripe_live_webhook_secret,
     );
   } catch (error) {
     throw new Error(
@@ -199,12 +204,13 @@ const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
     }
 
     default:
-      // onno event gula amra ekhon handle korchi na
+     
       break;
   }
 
   return { received: true };
 };
+
 
 const getMyPaymentHistoryFromDB = async (
   tenantId: string,

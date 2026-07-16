@@ -34,14 +34,14 @@ const registerUser = catchAsync(async (req: Request, res: Response, next: NextFu
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false, // has to be set to true in production
+      secure: true, // has to be set to true in production
       sameSite: "none",
       maxAge: 1000 * 60 * 60 * 24, 
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, // has to be set to true in production
+      secure: true, // has to be set to true in production
       sameSite: "none",
       maxAge: 1000 * 60 * 60 * 24 * 7, 
     });
@@ -67,7 +67,7 @@ const refreshToken = catchAsync(
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false, // Set to true in production
+      secure: true, // Set to true in production
       sameSite: "none",
       maxAge: 1000 * 60 * 60 * 24, // 24 hours or 1 day
     });

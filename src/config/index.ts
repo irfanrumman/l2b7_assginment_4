@@ -4,7 +4,7 @@ import path from "path";
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 export default {
-  port: process.env.PORT || 5000,
+  port: process.env.PORT || process.env.PROD_URL || 5000,
   database_url: process.env.DATABASE_URL,
   app_url: process.env.APP_URL,
   bcrypt_salt_rounds: process.env.BYCRYPT_SALT_ROUNDS,
@@ -15,4 +15,5 @@ export default {
 
   stripe_secret_key: process.env.STRIPE_SECRET_KEY!,
   stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET!,
+  stripe_live_webhook_secret: process.env.STRIPE_LIVE_WEBHOOK_SECRET!,
 };

@@ -9,6 +9,8 @@ import { LoginUser, RegisterUser, UpdateUserProfile } from "./auth.validation";
 import { Role } from "../../../prisma/generated/prisma/enums";
 import { Prisma } from "../../../prisma/generated/prisma/client";
 
+
+
 const registerUserIntoDB = async (payload: RegisterUser) => {
   const { name, email, password, role, phone } = payload;
 

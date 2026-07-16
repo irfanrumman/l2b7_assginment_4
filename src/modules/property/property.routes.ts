@@ -8,7 +8,7 @@ const router = Router();
 
 
 
-router.get("/",validate(propertyGetSchema, "query"),propertyController.getAllProperties);
+router.get("/", validate(propertyGetSchema, "query"),propertyController.getAllProperties);
 
 
 router.get("/:id", validate(propertyIdSchema, "params"), propertyController.getSinglePropertyById);
