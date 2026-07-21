@@ -23,14 +23,6 @@ const createPaymentSessionIntoDB = async (
     },
   });
 
-
-
-  // const createPaymentSessionIntoDB = async (tenantId, payload) => {
-  // const rentalRequest = await prisma.rentalRequest.findUnique({
-  //   where: { id: payload.rentalRequestId },
-  //   include: { property: true },
-  // });
-
   if (!rentalRequest) {
     throw new AppError("Rental Request not found", httpStatus.NOT_FOUND);
   }
@@ -56,31 +48,28 @@ const createPaymentSessionIntoDB = async (
     throw new AppError('This property is no longer available', httpStatus.CONFLICT);
   }
 
-  if (rentalRequest.payment?.status === "PAID") {
-    throw new AppError(
-      "This rental request has already been paid for",
-      httpStatus.CONFLICT,
-    );
-  }
+  const hasBlockingPayment = rentalRequest.payment.some(
+  (p) => p.status === 'PAID' || p.status === 'PENDING'
+);
 
-
-
-  // const hasCompletedPayment = rentalRequest.payment.some((p) => p.status === 'PAID');
-  // if (hasCompletedPayment) {
-  //   throw new AppError('This rental request has already been paid for', httpStatus.CONFLICT);
-  // }
+if (hasBlockingPayment) {
+  throw new AppError(
+    'A payment already exists for this rental request (completed or in progress)',
+    httpStatus.CONFLICT
+  );
+}
 
   const amount = Number(rentalRequest.property.price);
 
 
   // stripe checkout session create
   const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    payment_method_types: ["card"],
+    mode: 'payment',
+    payment_method_types: ['card'],
     line_items: [
       {
         price_data: {
-          currency: "usd",
+          currency: 'usd',
           unit_amount: Math.round(amount * 100),
           product_data: {
             name: rentalRequest.property.title,
@@ -99,72 +88,19 @@ const createPaymentSessionIntoDB = async (
   });
 
   if (!session.url) {
-    throw new AppError(
-      "Failed to create Stripe checkout session",
-      httpStatus.INTERNAL_SERVER_ERROR,
-    );
+    throw new AppError('Failed to create Stripe checkout session', httpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  const payment = await prisma.payment.upsert({
-    where: { rentalRequestId: rentalRequest.id },
-    update: {
-      transactionId: session.id,
-      amount,
-      method: "CARD",
-      provider: payload.provider,
-      status: "PENDING",
-    },
-    create: {
+  const payment = await prisma.payment.create({
+    data: {
       rentalRequestId: rentalRequest.id,
-      //   tenantId,
       amount,
-      method: "CARD",
+      method: 'CARD',
       provider: payload.provider,
       transactionId: session.id,
-      status: "PENDING",
+      status: 'PENDING',
     },
   });
-
-
-  
-  // const session = await stripe.checkout.sessions.create({
-  //   mode: 'payment',
-  //   payment_method_types: ['card'],
-  //   line_items: [
-  //     {
-  //       price_data: {
-  //         currency: 'usd',
-  //         unit_amount: Math.round(amount * 100),
-  //         product_data: {
-  //           name: rentalRequest.property.title,
-  //           description: `Rental payment for ${rentalRequest.property.title}`,
-  //         },
-  //       },
-  //       quantity: 1,
-  //     },
-  //   ],
-  //   success_url: `${config.client_url}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-  //   cancel_url: `${config.client_url}/payment/cancel`,
-  //   metadata: {
-  //     rentalRequestId: rentalRequest.id,
-  //     tenantId,
-  //   },
-  // });
-
-  // if (!session.url) {
-  //   throw new AppError('Failed to create Stripe checkout session', httpStatus.INTERNAL_SERVER_ERROR);
-  // }
-
-  // const payment = await prisma.payment.create({
-  //   data: {
-  //     rentalRequestId: rentalRequest.id,
-  //     amount,
-  //     method: 'CARD',
-  //     provider: payload.provider,
-  //     transactionId: session.id,
-  //     status: 'PENDING',
-  //   },
-  // });
 
   return {
     checkoutUrl: session.url,
@@ -172,9 +108,6 @@ const createPaymentSessionIntoDB = async (
     payment,
   };
 };
-
-
-
 
 
 
@@ -197,12 +130,14 @@ const verifyPaymentFromDB = async (tenantId: string, sessionId: string) => {
     },
   });
 
+
   if (!payment) {
     throw new AppError(
       "Payment not found for this session",
       httpStatus.NOT_FOUND,
     );
   }
+
 
   if (payment.rentalRequest.tenant.id !== tenantId) {
     throw new AppError(
@@ -225,10 +160,17 @@ const verifyPaymentFromDB = async (tenantId: string, sessionId: string) => {
     return updated;
   }
 
-  const updated = await prisma.payment.update({
-    where: { transactionId: sessionId },
-    data: { status: "PAID", paidAt: new Date() },
-  });
+
+   const [updated] = await prisma.$transaction([
+    prisma.payment.update({
+      where: { transactionId: sessionId },
+      data: { status: 'PAID', paidAt: new Date() },
+    }),
+    prisma.rentalRequest.update({
+      where: { id: payment.rentalRequestId },
+      data: { status: 'ACTIVE' },
+    }),
+  ]);
 
   return updated;
 };
@@ -243,37 +185,49 @@ const handleStripeWebhook = async (rawBody: Buffer, signature: string) => {
     event = stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      config.stripe_webhook_secret || config.stripe_live_webhook_secret,
+      config.stripe_webhook_secret || config.stripe_live_webhook_secret
     );
   } catch (error) {
-    throw new Error(
+    throw new AppError(
       `Webhook signature verification failed: ${(error as Error).message}`,
+      httpStatus.BAD_REQUEST
     );
   }
 
   switch (event.type) {
-    case "checkout.session.completed": {
+    case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      await prisma.payment.updateMany({
+      const payment = await prisma.payment.findUnique({
         where: { transactionId: session.id },
-        data: { status: "PAID", paidAt: new Date() },
       });
+
+      if (payment) {
+        await prisma.$transaction([
+          prisma.payment.update({
+            where: { transactionId: session.id },
+            data: { status: 'PAID', paidAt: new Date() },
+          }),
+          prisma.rentalRequest.update({
+            where: { id: payment.rentalRequestId },
+            data: { status: 'ACTIVE' },
+          }),
+        ]);
+      }
       break;
     }
 
-    case "checkout.session.expired": {
+    case 'checkout.session.expired': {
       const session = event.data.object as Stripe.Checkout.Session;
 
       await prisma.payment.updateMany({
         where: { transactionId: session.id },
-        data: { status: "FAILED" },
+        data: { status: 'FAILED' },
       });
       break;
     }
 
     default:
-     
       break;
   }
 
@@ -324,35 +278,6 @@ const getMyPaymentHistoryFromDB = async (
 
 //get singel payment by id
 
-// const getPaymentByIdFromDB = async (
-//   paymentId: string,
-//   userId: string,
-//   userRole: string
-// ) => {
-//   const payment = await prisma.payment.findUnique({
-//     where: { id: paymentId },
-//     include: {
-//       rentalRequest: {
-//         include: { property: true },
-//       },
-//     },
-//   });
-
-//   if (!payment) {
-//     throw new Error("Payment not found");
-//   }
-
-//   const isOwnerTenant = payment.tenantId === userId;
-//   const isOwnerLandlord = payment.rentalRequest.property.landlordId === userId;
-//   const isAdmin = userRole === "ADMIN";
-
-//   if (!isOwnerTenant && !isOwnerLandlord && !isAdmin) {
-//     throw new Error("You do not have access to this payment");
-//   }
-
-//   return payment;
-// };
-
 const getPaymentByIdFromDB = async (
   paymentId: string,
   userId: string,
@@ -371,7 +296,7 @@ const getPaymentByIdFromDB = async (
     throw new AppError("Payment not found", httpStatus.NOT_FOUND);
   }
 
-  const isOwnerTenant = payment.rentalRequest.tenantId === userId; // ← ফিক্স
+  const isOwnerTenant = payment.rentalRequest.tenantId === userId;
   const isOwnerLandlord = payment.rentalRequest.property.landlordId === userId;
   const isAdmin = userRole === "ADMIN";
 
