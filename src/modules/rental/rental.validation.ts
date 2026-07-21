@@ -2,12 +2,17 @@ import { z } from "zod";
 
 
 export const createRentalRequestSchema = z.object({
-  propertyId: z.string().uuid('Invalid property ID'),
-  moveInDate: z.coerce.date().refine((date) => date > new Date(), {
-    message: 'Move-in date must be in the future',
-  }),
-  message: z.string().max(500, 'Message must be under 500 characters').optional(),
-});
+    propertyId: z.string().uuid('Invalid property ID'),
+    moveInDate: z.coerce.date().refine((date) => date > new Date(), {
+      message: 'Move-in date must be in the future',
+    }),
+    moveOutDate: z.coerce.date(), 
+    message: z.string().max(500, 'Message must be under 500 characters').optional(),
+  })
+  .refine((data) => data.moveOutDate > data.moveInDate, {
+    message: 'Move-out date must be after the move-in date',
+    path: ['moveOutDate'],
+  });
 
 
 export const rentalRequestAllGetSchema = z.object({

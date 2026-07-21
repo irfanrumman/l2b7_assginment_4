@@ -53,6 +53,7 @@ const submitRentalRequestIntoDB = async (
       tenantId,
       propertyId: payload.propertyId,
       moveInDate: payload.moveInDate,
+      moveOutDate: payload.moveOutDate,
       message: payload.message,
     },
     include: {
@@ -158,7 +159,7 @@ const getSingleRentalRequestFromDB = async (
           },
         },
       },
-      payments: true,
+      payment: true,
       review: true,
     },
   });

@@ -193,7 +193,7 @@ const getAllRentalsForAdmin = async (filters: AdminRentalQueryValidated) => {
             landlord: { select: { id: true, name: true, email: true } },
           },
         },
-        payments: true,
+        payment: true,
       },
       orderBy: { createdAt: "desc" },
       skip: (pageNumber - 1) * pageSize,

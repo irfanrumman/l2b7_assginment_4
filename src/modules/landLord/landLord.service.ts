@@ -8,6 +8,8 @@ import {
 } from "./landLord.validation";
 import { Prisma } from "../../../prisma/generated/prisma/client";
 
+
+
 const createPropertyIntoDB = async (
   landlordId: string,
   payload: CreatePropertiesvalidated,
@@ -65,6 +67,7 @@ const createPropertyIntoDB = async (
 
   return createdProperty;
 };
+
 
 const updatePropertyInDB = async (
   propertyId: string,
@@ -147,6 +150,8 @@ const getLandlordRentalAllRequests = async (
     prisma.rentalRequest.count({ where }),
   ]);
 
+  console.log("rentals", rentals);
+
   return {
     data: rentals,
     meta: {
@@ -179,6 +184,8 @@ const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
   });
 };
 
+
+
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   PENDING: ["APPROVED", "REJECTED"],
   APPROVED: [],
@@ -187,8 +194,9 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   COMPLETED: [],
 };
 
+
 const updateRentalStatusInDB = async (
-  rentalId: string,
+  rentalId: string , 
   landlordId: string,
   newStatus: "APPROVED" | "REJECTED",
 ) => {
@@ -198,30 +206,39 @@ const updateRentalStatusInDB = async (
   });
 
   if (!rentalRequest) {
-    throw new AppError("Rental request not found", httpStatus.NOT_FOUND);
+    throw new AppError('Rental request not found', httpStatus.NOT_FOUND);
   }
 
   if (rentalRequest.property.landlordId !== landlordId) {
-    throw new AppError(
-      "You are not authorized to update this rental request",
-      httpStatus.FORBIDDEN,
-    );
+    throw new AppError('You are not authorized to update this rental request', httpStatus.FORBIDDEN);
   }
 
   const allowedNextStatuses = ALLOWED_TRANSITIONS[rentalRequest.status] ?? [];
   if (!allowedNextStatuses.includes(newStatus)) {
     throw new AppError(
       `Cannot change status from ${rentalRequest.status} to ${newStatus}`,
-      httpStatus.CONFLICT,
+      httpStatus.CONFLICT
     );
   }
 
-  const updatedRentalRequest = await prisma.rentalRequest.update({
-    where: { id: rentalId },
-    data: { status: newStatus },
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.rentalRequest.update({
+      where: { id: rentalId },
+      data: { status: newStatus },
+    });
+
+    if (newStatus === 'APPROVED') {
+      await tx.property.update({
+        where: { id: rentalRequest.propertyId },
+        data: { isAvailable: false },
+      });
+     
+    }
+
+    return result;
   });
 
-  return updatedRentalRequest;
+  return updated;
 };
 
 export const landLordService = {

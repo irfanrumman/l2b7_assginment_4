@@ -23,9 +23,18 @@ const createPaymentSessionIntoDB = async (
     },
   });
 
+
+
+  // const createPaymentSessionIntoDB = async (tenantId, payload) => {
+  // const rentalRequest = await prisma.rentalRequest.findUnique({
+  //   where: { id: payload.rentalRequestId },
+  //   include: { property: true },
+  // });
+
   if (!rentalRequest) {
     throw new AppError("Rental Request not found", httpStatus.NOT_FOUND);
   }
+
 
   if (rentalRequest.tenantId !== tenantId) {
     throw new AppError(
@@ -34,11 +43,17 @@ const createPaymentSessionIntoDB = async (
     );
   }
 
+
   if (rentalRequest.status !== "APPROVED") {
     throw new AppError(
       "Payment can only be made after the rental request is approved",
       httpStatus.CONFLICT,
     );
+  }
+
+
+    if (!rentalRequest.property.isAvailable) {
+    throw new AppError('This property is no longer available', httpStatus.CONFLICT);
   }
 
   if (rentalRequest.payment?.status === "PAID") {
@@ -48,7 +63,15 @@ const createPaymentSessionIntoDB = async (
     );
   }
 
+
+
+  // const hasCompletedPayment = rentalRequest.payment.some((p) => p.status === 'PAID');
+  // if (hasCompletedPayment) {
+  //   throw new AppError('This rental request has already been paid for', httpStatus.CONFLICT);
+  // }
+
   const amount = Number(rentalRequest.property.price);
+
 
   // stripe checkout session create
   const session = await stripe.checkout.sessions.create({
@@ -102,12 +125,58 @@ const createPaymentSessionIntoDB = async (
     },
   });
 
+
+  
+  // const session = await stripe.checkout.sessions.create({
+  //   mode: 'payment',
+  //   payment_method_types: ['card'],
+  //   line_items: [
+  //     {
+  //       price_data: {
+  //         currency: 'usd',
+  //         unit_amount: Math.round(amount * 100),
+  //         product_data: {
+  //           name: rentalRequest.property.title,
+  //           description: `Rental payment for ${rentalRequest.property.title}`,
+  //         },
+  //       },
+  //       quantity: 1,
+  //     },
+  //   ],
+  //   success_url: `${config.client_url}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+  //   cancel_url: `${config.client_url}/payment/cancel`,
+  //   metadata: {
+  //     rentalRequestId: rentalRequest.id,
+  //     tenantId,
+  //   },
+  // });
+
+  // if (!session.url) {
+  //   throw new AppError('Failed to create Stripe checkout session', httpStatus.INTERNAL_SERVER_ERROR);
+  // }
+
+  // const payment = await prisma.payment.create({
+  //   data: {
+  //     rentalRequestId: rentalRequest.id,
+  //     amount,
+  //     method: 'CARD',
+  //     provider: payload.provider,
+  //     transactionId: session.id,
+  //     status: 'PENDING',
+  //   },
+  // });
+
   return {
     checkoutUrl: session.url,
     sessionId: session.id,
     payment,
   };
 };
+
+
+
+
+
 
 const verifyPaymentFromDB = async (tenantId: string, sessionId: string) => {
   const payment = await prisma.payment.findUnique({

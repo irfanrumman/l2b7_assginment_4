@@ -84,6 +84,18 @@ const deleteCategoryFromDB = async (categoryId: string) => {
         throw new AppError("Category not found", httpStatus.NOT_FOUND);
     }
 
+
+      const propertiesUsingCategory = await prisma.property.findFirst({
+    where: { categoryId },
+  });
+
+  if (propertiesUsingCategory) {
+    throw new AppError(
+      'Cannot delete this category because properties are still using it',
+      httpStatus.CONFLICT
+    );
+  }
+
     const deletedCategory = await prisma.category.delete({
         where: { id: categoryId },
     });

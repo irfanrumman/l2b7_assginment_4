@@ -46,6 +46,7 @@ const getRentalRequestsForLandlord = catchAsync(
     const landlordId = req.user?.id as string; 
     const query = req.validatedQuery as RentalQueryValidated;
     const result = await landLordService.getLandlordRentalAllRequests(landlordId, query);
+    // console.log("result", result);
 
     sendResponse(res, {
       success: true,
