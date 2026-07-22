@@ -221,6 +221,31 @@ const updateRentalStatusInDB = async (
     );
   }
 
+
+  if (newStatus === 'APPROVED') {
+    const activeRental = await prisma.rentalRequest.findFirst({
+      where: {
+        propertyId: rentalRequest.propertyId,
+        status: {
+           in: ['APPROVED', 'ACTIVE'] 
+          },
+        moveOutDate: { 
+          gt: new Date() 
+        }, 
+        id: {
+           not: rentalId
+           }, 
+      },
+    });
+
+    if (activeRental) {
+      throw new AppError(
+        'This property is currently booked until its rental period ends',
+        httpStatus.CONFLICT
+      );
+    }
+  }
+
   const updated = await prisma.$transaction(async (tx) => {
     const result = await tx.rentalRequest.update({
       where: { id: rentalId },

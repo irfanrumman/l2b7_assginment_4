@@ -47,13 +47,6 @@ const createPaymentSessionIntoDB = async (
   }
 
 
-  
-  if (!rentalRequest.property.isAvailable) {
-    console.log("Property availability:", rentalRequest.property.isAvailable);
-    throw new AppError('This property is no longer available', httpStatus.CONFLICT);
-  }
-
-
 
   const hasBlockingPayment = rentalRequest.payment.some(
   (p) => p.status === 'PAID' || p.status === 'PENDING'
