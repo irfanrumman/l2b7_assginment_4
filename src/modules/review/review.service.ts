@@ -18,7 +18,7 @@ const createReviewIntoDB = async (
     },
   });
 
-  // Check rental request
+
   if (!rentalRequest) {
     throw new AppError(
       "Rental request not found.",
@@ -26,7 +26,7 @@ const createReviewIntoDB = async (
     );
   }
 
-  // Only the tenant who rented the property can review
+
   if (rentalRequest.tenantId !== tenantId) {
     throw new AppError(
       "You can only review your own rental request.",
@@ -34,7 +34,7 @@ const createReviewIntoDB = async (
     );
   }
 
-  // Payment must be completed
+  
   if (
     !rentalRequest.payment ||
     !rentalRequest.payment.some((p) => p.status === 'PAID')
@@ -44,23 +44,6 @@ const createReviewIntoDB = async (
       httpStatus.BAD_REQUEST
     );
   }
-
-  // Move-in date must be reached
-  // const today = await prisma.rentalRequest.findFirst({
-  //   where: {
-  //     id: payload.rentalRequestId,
-  //     tenantId: tenantId,
-  //     moveInDate: {
-  //       lte: new Date(),
-  //     },
-  //   },
-  // });
-  // if (!today) {
-  //   throw new AppError(
-  //     "You cannot submit a review before your move-in date.",
-  //     httpStatus.BAD_REQUEST
-  //   );
-  // }
 
 
   const today = new Date();
@@ -76,7 +59,7 @@ if (today < moveInDate) {
   );
 }
 
-  // Prevent duplicate review
+ 
   if (rentalRequest.review) {
     throw new AppError(
       "You have already submitted a review for this rental.",

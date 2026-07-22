@@ -9,79 +9,6 @@ import { Prisma } from "../../../prisma/generated/prisma/client";
 
 
 
-// const submitRentalRequestIntoDB = async (
-//   tenantId: string,
-//   payload: CreateRentalRequestValidation,
-// ) => {
-//   const property = await prisma.property.findUnique({
-//     where: { id: payload.propertyId },
-//   });
-
-//   if (!property) {
-//     throw new AppError("Property not found", httpStatus.NOT_FOUND);
-//   }
-
-//   if (!property.isAvailable) {
-//     throw new AppError(
-//       "This property is not available for rent",
-//       httpStatus.CONFLICT,
-//     );
-//   }
-
-//   if (property.landlordId === tenantId) {
-//     throw new AppError(
-//       "You cannot submit a request for your own property",
-//       httpStatus.FORBIDDEN,
-//     );
-//   }
-
-//   const existingRequest = await prisma.rentalRequest.findFirst({
-//     where: {
-//       tenantId,
-//       propertyId: payload.propertyId,
-//       status: { in: ["PENDING", "APPROVED"] },
-//     },
-//   });
-
-//   if (existingRequest) {
-//     throw new AppError(
-//       "You already have an active request for this property",
-//       httpStatus.CONFLICT,
-//     );
-//   }
-
-//   const rentalRequest = await prisma.rentalRequest.create({
-//     data: {
-//       tenantId,
-//       propertyId: payload.propertyId,
-//       moveInDate: payload.moveInDate,
-//       moveOutDate: payload.moveOutDate,
-//       message: payload.message,
-//     },
-//     include: {
-//       property: {
-//         select: {
-//           id: true,
-//           title: true,
-//           location: true,
-//           price: true,
-//         },
-//       },
-//       tenant: {
-//         select: {
-//           id: true,
-//           name: true,
-//           email: true,
-//           phone: true,
-//           role: true,
-//         },
-//       },
-//     },
-//   });
-
-//   return rentalRequest;
-// };
-
 const submitRentalRequestIntoDB = async (
   tenantId: string,
   payload: CreateRentalRequestValidation,
@@ -92,7 +19,7 @@ const submitRentalRequestIntoDB = async (
     },
   });
 
-  // Property exists
+ 
   if (!property) {
     throw new AppError(
       "Property not found",
@@ -100,21 +27,22 @@ const submitRentalRequestIntoDB = async (
     );
   }
 
-  // Tenant cannot rent own property
+
   if (property.landlordId === tenantId) {
     throw new AppError(
       "You cannot submit a request for your own property",
       httpStatus.FORBIDDEN,
     );
   }
- 
 
-  // If property is unavailable, check whether the previous rental has ended
+  
   if (!property.isAvailable) {
     const expiredRental = await prisma.rentalRequest.findFirst({
       where: {
         propertyId: property.id,
-        status: "APPROVED",
+        status: {
+          in: ["APPROVED", "ACTIVE"],
+        },
         moveOutDate: {
           lte: new Date(),
         },
@@ -123,10 +51,11 @@ const submitRentalRequestIntoDB = async (
         moveOutDate: "desc",
       },
     });
-console.log("Expired rental:", expiredRental);
-    // Previous rental has ended
+    
+
+    
     if (expiredRental) {
-      // Mark previous rental as completed
+      
       await prisma.rentalRequest.update({
         where: {
           id: expiredRental.id,
@@ -136,7 +65,7 @@ console.log("Expired rental:", expiredRental);
         },
       });
 
-      // Make property available again
+    
       await prisma.property.update({
         where: {
           id: property.id,
@@ -150,7 +79,7 @@ console.log("Expired rental:", expiredRental);
     }
   }
 
-  // Property is still unavailable
+  
   if (!property.isAvailable) {
     throw new AppError(
       "This property is not available for rent",
@@ -158,7 +87,7 @@ console.log("Expired rental:", expiredRental);
     );
   }
 
-  // Prevent duplicate active request
+
   const existingRequest = await prisma.rentalRequest.findFirst({
     where: {
       tenantId,
@@ -176,7 +105,7 @@ console.log("Expired rental:", expiredRental);
     );
   }
 
-  // Create new rental request (status will be PENDING by default)
+ 
   const rentalRequest = await prisma.rentalRequest.create({
     data: {
       tenantId,
