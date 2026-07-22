@@ -15,6 +15,8 @@ const createPaymentSessionIntoDB = async (
   tenantId: string,
   payload: { rentalRequestId: string; provider: PaymentProvider },
 ) => {
+  
+
   const rentalRequest = await prisma.rentalRequest.findUnique({
     where: { id: payload.rentalRequestId },
     include: {
@@ -29,6 +31,7 @@ const createPaymentSessionIntoDB = async (
 
 
   if (rentalRequest.tenantId !== tenantId) {
+
     throw new AppError(
       "You do not have access to this rental request",
       httpStatus.FORBIDDEN,
@@ -44,9 +47,13 @@ const createPaymentSessionIntoDB = async (
   }
 
 
-    if (!rentalRequest.property.isAvailable) {
+  
+  if (!rentalRequest.property.isAvailable) {
+    console.log("Property availability:", rentalRequest.property.isAvailable);
     throw new AppError('This property is no longer available', httpStatus.CONFLICT);
   }
+
+
 
   const hasBlockingPayment = rentalRequest.payment.some(
   (p) => p.status === 'PAID' || p.status === 'PENDING'
