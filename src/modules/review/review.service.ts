@@ -37,7 +37,7 @@ const createReviewIntoDB = async (
   // Payment must be completed
   if (
     !rentalRequest.payment ||
-    rentalRequest.payment.status !== "PAID"
+    !rentalRequest.payment.some((p) => p.status === 'PAID')
   ) {
     throw new AppError(
       "You can submit a review only after completing the payment.",
@@ -46,18 +46,35 @@ const createReviewIntoDB = async (
   }
 
   // Move-in date must be reached
+  // const today = await prisma.rentalRequest.findFirst({
+  //   where: {
+  //     id: payload.rentalRequestId,
+  //     tenantId: tenantId,
+  //     moveInDate: {
+  //       lte: new Date(),
+  //     },
+  //   },
+  // });
+  // if (!today) {
+  //   throw new AppError(
+  //     "You cannot submit a review before your move-in date.",
+  //     httpStatus.BAD_REQUEST
+  //   );
+  // }
+
+
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+today.setHours(0, 0, 0, 0);
 
-  const moveInDate = new Date(rentalRequest.moveInDate);
-  moveInDate.setHours(0, 0, 0, 0);
+const moveInDate = new Date(rentalRequest.moveInDate);
+moveInDate.setHours(0, 0, 0, 0);
 
-  if (today < moveInDate) {
-    throw new AppError(
-      "You can submit a review only after your move-in date.",
-      httpStatus.BAD_REQUEST
-    );
-  }
+if (today < moveInDate) {
+  throw new AppError(
+    "You cannot submit a review before your move-in date.",
+    httpStatus.BAD_REQUEST
+  );
+}
 
   // Prevent duplicate review
   if (rentalRequest.review) {
@@ -94,6 +111,8 @@ const createReviewIntoDB = async (
 
   return review;
 };
+
+
 export const reviewService = {
   createReviewIntoDB,
 };
