@@ -9,7 +9,7 @@ import { Prisma } from "../../../prisma/generated/prisma/client";
 
 
 
-const submitRentalRequestIntoDB = async (
+const createRentalRequestIntoDB = async (
   tenantId: string,
   payload: CreateRentalRequestValidation,
 ) => {
@@ -238,7 +238,7 @@ const getSingleRentalRequestFromDB = async (
 };
 
 export const rentalRequestService = {
-  submitRentalRequestIntoDB,
+  createRentalRequestIntoDB,
   getAllRentalRequestsForTenant,
   getSingleRentalRequestFromDB,
 };

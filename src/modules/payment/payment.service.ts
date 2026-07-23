@@ -38,6 +38,13 @@ const createPaymentSessionIntoDB = async (
     );
   }
 
+  if(rentalRequest.status == "ACTIVE") {
+    throw new AppError(
+      "Payment cannot be made for an active rental request",
+      httpStatus.CONFLICT,
+    );
+  }
+
 
   if (rentalRequest.status !== "APPROVED") {
     throw new AppError(

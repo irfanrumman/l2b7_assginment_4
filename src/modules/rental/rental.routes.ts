@@ -15,7 +15,7 @@ router.post(
   "/",
   auth(Role.TENANT),
   validate(createRentalRequestSchema),
-  rentalController.submitRentalRequest,
+  rentalController.createRentalRequest,
 );
 
 router.get(

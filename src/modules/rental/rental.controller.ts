@@ -8,11 +8,11 @@ import { RentalRequestAllGetValidation } from "./rental.validation";
 ;
 
 
-const submitRentalRequest = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const createRentalRequest = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
   const tenantId = req.user?.id as string; 
   
-  const result = await rentalRequestService.submitRentalRequestIntoDB(tenantId, req.body);
+  const result = await rentalRequestService.createRentalRequestIntoDB(tenantId, req.body);
 
   sendResponse(res, {
     success: true,
@@ -61,7 +61,7 @@ const getRentalRequestById = catchAsync(async (req: Request, res: Response) => {
 
 
 export const rentalController = {
-  submitRentalRequest,
+  createRentalRequest,
   getAllRentalRequests,
   getRentalRequestById,
 };
