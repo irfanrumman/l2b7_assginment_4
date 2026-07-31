@@ -12,6 +12,7 @@ model Property {
   price               Float
   isAvailable         Boolean              @default(true)
   image               String?
+  featured             Boolean             @default(false)
 
 
   createdAt           DateTime             @default(now())
