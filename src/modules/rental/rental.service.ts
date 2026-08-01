@@ -121,6 +121,7 @@ const createRentalRequestIntoDB = async (
           title: true,
           location: true,
           price: true,
+          image: true,
         },
       },
       tenant: {
@@ -162,6 +163,7 @@ const getAllRentalRequestsForTenant = async (
             title: true,
             location: true,
             price: true,
+            image: true,
             isAvailable: true,
             landlord: {
               select: {
@@ -207,6 +209,7 @@ const getSingleRentalRequestFromDB = async (
           title: true,
           location: true,
           price: true,
+          image: true,
           isAvailable: true,
           landlord: {
             select: {

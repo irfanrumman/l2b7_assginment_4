@@ -5,6 +5,7 @@ export const createPropertiesSchema = z.object({
   description: z.string().trim().min(10),
   location: z.string().trim().min(2),
   price: z.coerce.number().positive(),
+   image: z.string().url('Invalid image URL'),
   isAvailable: z.boolean().optional(),
   categoryId: z.string().uuid(),
 });

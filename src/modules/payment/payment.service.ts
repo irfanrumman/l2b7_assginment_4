@@ -261,7 +261,14 @@ const getMyPaymentHistoryFromDB = async (
       include: {
         rentalRequest: {
           include: {
-            property: { select: { id: true, title: true, location: true } },
+            property: { 
+              select: {
+                 id: true, 
+                 title: true,
+                  location: true,
+                  image: true,
+                  price: true,
+                } },
           },
         },
       },

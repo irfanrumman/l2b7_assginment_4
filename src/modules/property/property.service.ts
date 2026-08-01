@@ -88,14 +88,28 @@ const getSinglePropertyById = async (id: string) => {
     where: { id },
     include: {
       landlord: {
-        select: { id: true, name: true, email: true, phone: true, role: true },
+        select: { 
+          id: true, 
+          name: true, 
+          email: true,
+           phone: true, 
+           role: true 
+          },
       },
       category: {
-        select: { id: true, name: true, description: true },
+        select: { 
+          id: true, 
+          name: true, 
+          description: true },
       },
       reviews: {
         include: {
-          tenant: { select: { id: true, name: true } },
+          tenant: { 
+            select: { 
+              id: true, 
+              name: true 
+            } 
+          },
         },
       },
     },

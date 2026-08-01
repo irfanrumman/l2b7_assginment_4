@@ -87,13 +87,15 @@ if (today < moveInDate) {
           id: true,
           title: true,
           location: true,
+          price: true,
+          image: true,
         },
       },
     },
   });
-
   return review;
 };
+
 
 
 export const reviewService = {

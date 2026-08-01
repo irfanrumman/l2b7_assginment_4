@@ -30,6 +30,7 @@ const createPropertyIntoDB = async (
       description: payload.description,
       location: payload.location,
       price: payload.price,
+      image: payload.image,
       landlord: {
         connect: {
           id: landlordId,
