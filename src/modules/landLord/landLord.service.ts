@@ -143,6 +143,7 @@ const getLandlordRentalAllRequests = async (
       include: {
         tenant: { select: { id: true, name: true, email: true, phone: true } },
         property: { select: { id: true, title: true, location: true } },
+        payment: true,
       },
       skip,
       take: limit,
@@ -151,7 +152,6 @@ const getLandlordRentalAllRequests = async (
     prisma.rentalRequest.count({ where }),
   ]);
 
-  console.log("rentals", rentals);
 
   return {
     data: rentals,
