@@ -22,6 +22,10 @@ export const updatePropertySchema = z.object({
   price: z.coerce.number().positive().optional(),
   isAvailable: z.boolean().optional(),
   categoryId: z.string().uuid().optional(),
+  image: z
+    .string()
+    .url("Invalid image URL")
+    .optional(), 
 });
 
 
