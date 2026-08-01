@@ -49,8 +49,12 @@ export const adminRentalQuerySchema = z.object({
 });
 
 
+export const updatePropertyFeaturedSchema = z.object({
+  featured: z.boolean(),
+});
 
 
+export type UpdatePropertyFeaturedValidated = z.infer<typeof updatePropertyFeaturedSchema>;
 export type GetAllUsersValidation = z.infer<typeof getAllUsersSchema>;
 export type UserIdValidated = z.infer<typeof userIdSchema>;
 export type UpdateUserStatusValidated = z.infer<typeof updateUserStatusSchema>;

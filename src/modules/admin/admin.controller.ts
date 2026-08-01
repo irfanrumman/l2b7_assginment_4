@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
-import { AdminPropertyGetValidated, AdminRentalQueryValidated, GetAllUsersValidation, UpdateUserStatusValidated } from "./admin.validation";
+import { AdminPropertyGetValidated, AdminRentalQueryValidated, GetAllUsersValidation, UpdatePropertyFeaturedValidated, UpdateUserStatusValidated } from "./admin.validation";
 import { adminService } from "./admin.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
@@ -74,7 +74,19 @@ const getAllRentalsForAdmin = catchAsync(async (req: Request, res: Response) => 
 });
 
 
+const updatePropertyFeatured = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const { featured } = req.body as UpdatePropertyFeaturedValidated;
 
+  const result = await adminService.updatePropertyFeaturedInDB(id, featured);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `Property has been ${featured ? "marked as featured" : "removed from featured"} successfully`,
+    data: result,
+  });
+});
 
 
 export const adminController = {
@@ -82,5 +94,5 @@ export const adminController = {
     updateUserStatus,
     getAllPropertiesForAdmin,
     getAllRentalsForAdmin,
- 
+    updatePropertyFeatured,
 };

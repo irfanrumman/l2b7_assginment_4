@@ -4,6 +4,7 @@ import { auth } from "../../middelwares/auth";
 import {
   adminRentalQuerySchema,
   getAllUsersSchema,
+  updatePropertyFeaturedSchema,
   updateUserStatusSchema,
   userIdSchema,
 } from "./admin.validation";
@@ -32,6 +33,14 @@ router.get(
   auth(Role.ADMIN),
   validate(getAllUsersSchema, "query"),
   adminController.getAllPropertiesForAdmin,
+);
+
+router.patch(
+  "/properties/:id",
+  auth(Role.ADMIN),
+  validate(userIdSchema, "params"),
+  validate(updatePropertyFeaturedSchema),
+  adminController.updatePropertyFeatured,
 );
 
 router.get(

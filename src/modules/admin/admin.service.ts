@@ -213,9 +213,37 @@ const getAllRentalsForAdmin = async (filters: AdminRentalQueryValidated) => {
   };
 };
 
+
+const updatePropertyFeaturedInDB = async (
+  propertyId: string,
+  featured: boolean,
+) => {
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+  });
+
+  if (!property) {
+    throw new AppError("Property not found", httpStatus.NOT_FOUND);
+  }
+
+  const updatedProperty = await prisma.property.update({
+    where: { id: propertyId },
+    data: { featured },
+    include: {
+      landlord: {
+        select: { id: true, name: true, email: true, phone: true },
+      },
+      category: { select: { id: true, name: true } },
+    },
+  });
+
+  return updatedProperty;
+};
+
 export const adminService = {
   getAllUsersFromDB,
   updateUserStatusInDB,
   getAllPropertiesForAdmin,
   getAllRentalsForAdmin,
+  updatePropertyFeaturedInDB,
 };
