@@ -164,6 +164,27 @@ const getLandlordRentalAllRequests = async (
   };
 };
 
+// const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
+//   const property = await prisma.property.findUnique({
+//     where: { id: propertyId },
+//   });
+
+//   if (!property) {
+//     throw new AppError("Property not found", httpStatus.NOT_FOUND);
+//   }
+
+//   if (property.landlordId !== landlordId) {
+//     throw new AppError(
+//       "You are not authorized to delete this property",
+//       httpStatus.FORBIDDEN,
+//     );
+//   }
+
+//   await prisma.property.delete({
+//     where: { id: propertyId },
+//   });
+// };
+
 const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
@@ -180,12 +201,18 @@ const deletePropertyFromDB = async (propertyId: string, landlordId: string) => {
     );
   }
 
+  // Rented (currently unavailable) thakle delete korte deya jabe na
+  if (!property.isAvailable) {
+    throw new AppError(
+      "Cannot delete a property that is currently rented. Please wait until the rental period ends.",
+      httpStatus.CONFLICT,
+    );
+  }
+
   await prisma.property.delete({
     where: { id: propertyId },
   });
 };
-
-
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   PENDING: ["APPROVED", "REJECTED"],
@@ -194,6 +221,8 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   ACTIVE: [],
   COMPLETED: [],
 };
+
+
 
 
 const updateRentalStatusInDB = async (
