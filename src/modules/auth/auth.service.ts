@@ -48,11 +48,14 @@ const registerUserIntoDB = async (payload: RegisterUser) => {
 const loginUserIntoDB = async (payload: LoginUser) => {
   const { email, password } = payload;
 
-  const user = await prisma.user.findUniqueOrThrow({
+  const user = await prisma.user.findUnique({
     where: {
       email,
     },
   });
+  if (!user) {
+    throw new AppError("Invalid email or password", httpStatus.UNAUTHORIZED);
+  }
 
   if (user.status === "BANNED") {
     throw new AppError(
